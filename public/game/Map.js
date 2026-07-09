@@ -1,5 +1,49 @@
 import { Bot } from './Bot.js'
 import { Pathfinder } from './Pathfinder.js'
+import { resetGameLog } from './UI.js'
+
+const PARTY_COUNT = 4;
+
+function fieldKey(x, y) {
+  return `f${x}x${y}`;
+}
+
+function partyBoardKey(party) {
+  return `pb${party}`;
+}
+
+function emptyPartyArrays() {
+  return Array.from({ length: PARTY_COUNT }, () => []);
+}
+
+function isCornerField(x, y, board) {
+  return (x === 1 && y === 1)
+    || (x === board.hw_xmax - 2 && y === 1)
+    || (x === board.hw_xmax - 2 && y === board.hw_ymax - 2)
+    || (x === 1 && y === board.hw_ymax - 2);
+}
+
+function fieldPixelPosition(x, y, board) {
+  const px = x * (board.hw_fw / 4 * 3) + board.hw_fw / 2;
+  const py = x % 2 === 0
+    ? y * board.hw_fh + board.hw_fh / 2
+    : y * board.hw_fh + board.hw_fh;
+  return { px, py };
+}
+
+function setIconLayout(icon, width, height, offsetX = 0, offsetY = 0) {
+  icon._width = width;
+  icon._height = height;
+  icon._x = offsetX;
+  icon._y = offsetY;
+}
+
+function compareArmiesByProfitability(a, b) {
+  if (a.profitability !== b.profitability) {
+    return b.profitability - a.profitability;
+  }
+  return (b.count + b.morale) - (a.count + a.morale);
+}
 
 class Map {
   constructor(mapNumber, images) {
@@ -8,13 +52,18 @@ class Map {
     if (this.mapNumber < 0) {
       this.mapNumber = Math.floor(Math.random() * 999999);
     }
-    this.resetGameLog();
+    resetGameLog();
     this.updateGameLog(`Map #${this.mapNumber}`, 'map', null);
     this.setSeed(this.mapNumber);
 
     this.pathfinder = new Pathfinder();
     this.bot = new Bot(this.pathfinder);
     this.images = images;
+    this.turnLogContainer = null;
+  }
+
+  setTurnLogContainer(container) {
+    this.turnLogContainer = container;
   }
 
   setSeed(seed) {
@@ -47,49 +96,8 @@ class Map {
     ];
   }
 
-  pasteBitmap(imageData, image, targetCanvas) {
-    const ctx = targetCanvas.getContext('2d');
-
-    const positionX = imageData.destX;
-    const positionY = imageData.destY;
-    const rotationDegrees = imageData.rotationDegrees;
-    const horizontalFlip = imageData.horizontalFlip;
-    const verticalFlip = imageData.verticalFlip;
-    this.transformAndDrawImage(ctx, image, horizontalFlip, verticalFlip, rotationDegrees, positionX, positionY);
-  }
-
-  transformAndDrawImage(ctx, image, horizontalFlip, verticalFlip, rotationDegrees, positionX, positionY) {
-    var angleRadians = rotationDegrees * Math.PI / 180.0;
-    var width = image.width;
-    var height = image.height;
-    var imageCenterX = positionX + (width / 2.0);
-    var imageCenterY = positionY + (height / 2.0);
-
-    ctx.translate(imageCenterX, imageCenterY);
-    // Rotate on image center
-    ctx.rotate(angleRadians);
-
-    // Flip the image
-    var horizontalFlipScale, verticalFlipScale;
-    if (horizontalFlip) {
-      horizontalFlipScale = -1
-    } else {
-      horizontalFlipScale = 1;
-    }
-    if (verticalFlip) {
-      verticalFlipScale = -1
-    } else {
-      verticalFlipScale = 1;
-    }
-
-    ctx.drawImage(image, -width / 2.0, -height / 2.0, width, height);
-
-    ctx.rotate(-angleRadians);
-    ctx.translate(-imageCenterX, -imageCenterY);
-  }
-
   getField(x, y, board) {
-    return board.field["f" + x + "x" + y];
+    return board.field[fieldKey(x, y)];
   }
 
   getFieldXYFromScreenXY(board, screenX, screenY) {
@@ -113,72 +121,30 @@ class Map {
   }
 
   updateField(field, board) {
-    if (!field.port) {
-      field.port = {};
-    }
-    if (!field.town) {
-      field.town = {};
-    }
-    field.port._visible = false;
-    field.town._visible = false;
-    switch (field.estate) {
-      case "port":
-        field.port._visible = true;
-        break;
-      case "town":
-        field.town._visible = true;
-    }
-    function pNormal(icon) {
-      icon._width = 35;
-      icon._height = 35;
-      icon._x = 0;
-      icon._y = 0;
-    }
-    function pSmall(icon) {
-      icon._width = 20;
-      icon._height = 20;
-      icon._x = 0;
-      icon._y = 0;
-    }
-    function pSide(icon) {
-      icon._width = 20;
-      icon._height = 20;
-      icon._x = 18;
-      icon._y = -4;
-    }
+    if (!field.port) field.port = {};
+    if (!field.town) field.town = {};
+
+    field.port._visible = field.estate === "port";
+    field.town._visible = field.estate === "town";
+
     if (field.army) {
-      pSide(field.town);
-      pSide(field.port);
+      setIconLayout(field.town, 20, 20, 18, -4);
+      setIconLayout(field.port, 20, 20, 18, -4);
     } else if (field.capital < 0) {
-      pSmall(field.town);
-      pNormal(field.port);
+      setIconLayout(field.town, 20, 20);
+      setIconLayout(field.port, 35, 35);
     } else {
-      pNormal(field.town);
-      pNormal(field.port);
+      setIconLayout(field.town, 35, 35);
+      setIconLayout(field.port, 35, 35);
     }
-    var x = field.fx;
-    var y = field.fy;
-    if (field.party >= 0 && !board["pb" + field.party]["f" + x + "x" + y]) {
-      board["pb" + field.party]["f" + x + "x" + y] = {}
-      var brd = board["pb" + field.party]["f" + x + "x" + y];
-      var px = x * (board.hw_fw / 4 * 3) + board.hw_fw / 2;
-      var py;
-      if (x % 2 == 0) {
-        py = y * board.hw_fh + board.hw_fh / 2;
-      } else {
-        py = y * board.hw_fh + board.hw_fh;
-      }
-      brd._x = px;
-      brd._y = py;
-    }
-    for (var p = 0; p < board.hw_parties_count; p++) {
-      if (p != field.party || field.party < 0) {
-        if (board["pb" + p]["f" + x + "x" + y]) {
-          if (!board["pb" + p]["f" + x + "x" + y].removing) {
-            // TODO: remove hex
-          }
-        }
-      }
+
+    const { fx: x, fy: y } = field;
+    const key = fieldKey(x, y);
+    const partyBoard = board[partyBoardKey(field.party)];
+
+    if (field.party >= 0 && !partyBoard[key]) {
+      const { px, py } = fieldPixelPosition(x, y, board);
+      partyBoard[key] = { _x: px, _y: py };
     }
   }
 
@@ -209,7 +175,6 @@ class Map {
   }
 
   addTown(x, y, board) {
-    const townBgDirtImg = `images/cd_${this.rand(6)}.png`;
     const townBgGrassImg = this.images[`townBgGrass${this.rand(6) + 1}`].img;
     const flipH = this.rand(2);
     const flipV = this.rand(2);
@@ -331,31 +296,19 @@ class Map {
   }
 
   addField(x, y, board) {
-    board.field["f" + x + "x" + y] = {};
-    var nfield = board.field["f" + x + "x" + y];
+    const key = fieldKey(x, y);
+    board.field[key] = {};
+    const nfield = board.field[key];
     nfield.fx = x;
     nfield.fy = y;
-    if (x == board.hw_xmax - 1 && y == board.hw_ymax - 1) {
+    if (x === board.hw_xmax - 1 && y === board.hw_ymax - 1) {
       board.hw_top_field_depth = -1; // TODO: find a better value
     }
-    var px = x * (board.hw_fw / 4 * 3) + board.hw_fw / 2;
-    var py;
-    if (x % 2 == 0) {
-      py = y * board.hw_fh + board.hw_fh / 2;
-    } else {
-      py = y * board.hw_fh + board.hw_fh;
-    }
+    const { px, py } = fieldPixelPosition(x, y, board);
     nfield._x = px;
     nfield._y = py;
     nfield.land_id = -1;
-    if (x == 1 && y == 1
-      || x == board.hw_xmax - 2 && y == 1
-      || x == board.hw_xmax - 2 && y == board.hw_ymax - 2
-      || x == 1 && y == board.hw_ymax - 2) {
-      nfield.type = "land";
-    } else {
-      nfield.type = this.rand(10) <= 1 ? "land" : "water";
-    }
+    nfield.type = isCornerField(x, y, board) || this.rand(10) <= 1 ? "land" : "water";
     nfield.party = -1;
     nfield.capital = -1;
     nfield.n_town = false;
@@ -407,20 +360,18 @@ class Map {
   }
 
   generatePartyCapitals(board) {
-    var cp = 0;
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
-        if ((x == 1 && y == 1)
-          || (x == board.hw_xmax - 2 && y == 1)
-          || (x == board.hw_xmax - 2 && y == board.hw_ymax - 2)
-          || (x == 1 && y == board.hw_ymax - 2)) {
-          this.getField(x, y, board).estate = "town";
-          board.hw_towns.push(this.getField(x, y, board));
-          this.getField(x, y, board).capital = cp;
-          board.hw_parties_capitals[cp] = this.getField(x, y, board);
-          this.annexLand(cp, this.getField(x, y, board), board, true);
-          cp++;
-        }
+    let capitalIndex = 0;
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
+        if (!isCornerField(x, y, board)) continue;
+
+        const field = this.getField(x, y, board);
+        field.estate = "town";
+        field.capital = capitalIndex;
+        board.hw_towns.push(field);
+        board.hw_parties_capitals[capitalIndex] = field;
+        this.annexLand(capitalIndex, field, board, true);
+        capitalIndex++;
       }
     }
   }
@@ -570,54 +521,39 @@ class Map {
   }
 
   drawWaterAndPorts(board) {
-    var portImageNum = [2,1,2,2,1,2];
-    var flipX = [1,0,0,0,0,1];
-    var flipY = [1,1,1,0,0,0];
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
+    const ctx = board.background_sea.getContext('2d');
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
         const field = this.getField(x, y, board);
-        if (field.type == "water") {
-          const seaBg = this.images[`seaBg${this.rand(6) + 1}`].img;
-          const flipH = this.rand(2);
-          const flipV = this.rand(2);
-          const rotateDegrees = this.rand(2) * 180;
-          const ctx = board.background_sea.getContext('2d');
+        if (field.type !== "water") continue;
 
-          const img = seaBg;
-          const width = seaBg.width;
-          const height = seaBg.height;
-          const destX = field._x - (width / 2.0);
-          const destY = field._y - (height / 2.0);
-          ctx.translate(destX, destY);
-          this.rotateImageMatrix(ctx, img, rotateDegrees);
-          this.flipImageMatrix(ctx, img, flipH, flipV);
-          ctx.drawImage(img, 0, 0);
-          ctx.resetTransform();
-        }
+        const img = this.images[`seaBg${this.rand(6) + 1}`].img;
+        const destX = field._x - (img.width / 2);
+        const destY = field._y - (img.height / 2);
+
+        ctx.translate(destX, destY);
+        this.rotateImageMatrix(ctx, img, this.rand(2) * 180);
+        this.flipImageMatrix(ctx, img, this.rand(2), this.rand(2));
+        ctx.drawImage(img, 0, 0);
+        ctx.resetTransform();
       }
     }
   }
 
   assignTownNames(board) {
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
-        this.updateField(this.getField(x, y, board), board);
-        switch (this.getField(x, y, board).estate) {
-          case "town":
-            this.addTown(x, y, board);
-            this.getField(x, y, board).town_name = this.randTown();
-            break;
-          case "port":
-            this.addTown(x, y, board);
-            this.getField(x, y, board).town_name = this.randTown();
-            break;
-          default:
-            var field = this.getField(x, y, board);
-            if (!field.town_sign) {
-              field.town_sign = {};
-            }
-            field.town_sign._visible = false;
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
+        const field = this.getField(x, y, board);
+        this.updateField(field, board);
+
+        if (field.estate === "town" || field.estate === "port") {
+          this.addTown(x, y, board);
+          field.town_name = this.randTown();
+          continue;
         }
+
+        if (!field.town_sign) field.town_sign = {};
+        field.town_sign._visible = false;
       }
     }
   }
@@ -746,9 +682,9 @@ class Map {
     for (var p = 0; p < board.hw_parties_count; p++) {
       this.checkPartyState(p, board);
     }
-    board.hw_parties_towns = [new Array(), new Array(), new Array(), new Array()];
-    board.hw_parties_ports = [new Array(), new Array(), new Array(), new Array()];
-    board.hw_parties_lands = [new Array(), new Array(), new Array(), new Array()];
+    board.hw_parties_towns = emptyPartyArrays();
+    board.hw_parties_ports = emptyPartyArrays();
+    board.hw_parties_lands = emptyPartyArrays();
     for (var x = 0; x < board.hw_xmax; x++) {
       for (var y = 0; y < board.hw_ymax; y++) {
         var field = this.getField(x, y, board);
@@ -884,7 +820,7 @@ class Map {
         if (board.human == party
           && board.hw_parties_provinces_cp[party]
           && board.hw_parties_provinces_cp[party].length >= 2) {
-          this.updateBoard(board);
+          self.updateBoard(board);
           board.win = true;
         }
         if (field.capital == field.party) {
@@ -936,7 +872,7 @@ class Map {
     function moraleLost(party, field) {
       if (field.capital == party) {
         if (board.human == party) {
-          updateBoard(board);
+          self.updateBoard(board);
           board.win = false;
         }
       } else {
@@ -1011,54 +947,38 @@ class Map {
     }
   }
 
-  makeMove(party, board, init) {
-    var profitability = this.bot.calcArmiesProfitability(party, board);
-    profitability.sort(orderArmies);
+  makeMove(party, board) {
+    const rankedMoves = this.bot.calcArmiesProfitability(party, board);
+    rankedMoves.sort(compareArmiesByProfitability);
 
-    function orderArmies(a, b) {
-      var armyAProfitability = a.profitability;
-      var armyBProfitability = b.profitability;
-      if (armyAProfitability > armyBProfitability) {
-        return -1;
-      }
-      if (armyAProfitability < armyBProfitability) {
-        return 1;
-      }
-      var armyATotal = a.count + a.morale;
-      var armyBTotal = b.count + b.morale;
-      if (armyATotal > armyBTotal) {
-        return -1;
-      }
-      if (armyATotal < armyBTotal) {
-        return 1;
-      }
-      return 0;
-    }
-
-    if (profitability.length == 0) {
+    if (rankedMoves.length === 0) {
       console.warn('No possible moves for party ', board.hw_parties_names[party]);
       return;
     }
 
-    if (!profitability[0].move.wait_for_support) {
+    const bestMove = rankedMoves[0];
+    if (!bestMove.move.wait_for_support) {
       board.hw_parties_wait_for_support_field[party] = null;
       board.hw_parties_wait_for_support_count[party] = 0;
-      this.moveArmy(profitability[0], profitability[0].move, board);
-    } else {
-      if (profitability[0].move == board.hw_parties_wait_for_support_field[party]) {
-        board.hw_parties_wait_for_support_count[party] = board.hw_parties_wait_for_support_count[party] + 1;
-      } else {
-        board.hw_parties_wait_for_support_field[party] = profitability[0].move;
-        board.hw_parties_wait_for_support_count[party] = 0;
-      }
-      var supportArmies = this.bot.supportArmy(party, profitability[0], profitability[0].move, board);
-      if (supportArmies.length > 0) {
-        supportArmies.sort(orderArmies);
-        this.moveArmy(supportArmies[0], supportArmies[0].move, board);
-      } else {
-        this.moveArmy(profitability[0], profitability[0].move, board);
-      }
+      this.moveArmy(bestMove, bestMove.move, board);
+      return;
     }
+
+    if (bestMove.move === board.hw_parties_wait_for_support_field[party]) {
+      board.hw_parties_wait_for_support_count[party]++;
+    } else {
+      board.hw_parties_wait_for_support_field[party] = bestMove.move;
+      board.hw_parties_wait_for_support_count[party] = 0;
+    }
+
+    const supportArmies = this.bot.supportArmy(party, bestMove, bestMove.move, board);
+    if (supportArmies.length > 0) {
+      supportArmies.sort(compareArmiesByProfitability);
+      this.moveArmy(supportArmies[0], supportArmies[0].move, board);
+      return;
+    }
+
+    this.moveArmy(bestMove, bestMove.move, board);
   }
 
   moveArmy(army, field, board) {
@@ -1216,14 +1136,8 @@ class Map {
     return movePoints;
   }
 
-  resetGameLog() {
-    let gamelogElement = document.getElementById('gamelog');
-    gamelogElement.innerHTML = "";
-  }
-
   updateGameLog(message, type = 'info', board = null) {
-    // Use the current turn container if available, otherwise fall back to gamelog element
-    const targetContainer = window.currentTurnLogContainer || document.getElementById('gamelog');
+    const targetContainer = this.turnLogContainer || document.getElementById('gamelog');
     if (!targetContainer) return;
     
     // Get current turn number for grepping/searching
@@ -1252,11 +1166,9 @@ class Map {
     // Add turn number to entry for grepping (visible but subtle)
     const entry = `<div class="log-entry log-${type}" data-turn="${turnNumber}"><span class="log-turn-number">[T${turnNumber}]</span> ${formattedMessage}</div>`;
     
-    if (targetContainer === window.currentTurnLogContainer) {
-      // Append to turn container
+    if (this.turnLogContainer) {
       targetContainer.insertAdjacentHTML('beforeend', entry);
     } else {
-      // Fallback: append directly to gamelog element
       targetContainer.innerHTML += entry;
     }
     

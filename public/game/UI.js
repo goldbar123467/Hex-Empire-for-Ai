@@ -3,6 +3,66 @@
  * Handles game log, filters, statistics tabs, and status updates
  */
 
+function getGameReplay() {
+  return window.game?.replay && window.game?.board
+    ? { replay: window.game.replay, board: window.game.board }
+    : null;
+}
+
+function bindReplayControl(elementId, handler) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  element.addEventListener('click', () => {
+    const context = getGameReplay();
+    if (context) handler(context.replay, context.board);
+  });
+}
+
+function bindReplaySlider(elementId) {
+  const slider = document.getElementById(elementId);
+  if (!slider) return;
+  slider.addEventListener('input', function() {
+    const context = getGameReplay();
+    if (context) context.replay.goToTurn(parseInt(this.value, 10), context.board);
+  });
+}
+
+export function resetGameLog() {
+  const gamelogElement = document.getElementById('gamelog');
+  if (gamelogElement) {
+    gamelogElement.innerHTML = '';
+  }
+}
+
+/** Creates a collapsible turn section in the game log and returns its content container. */
+export function beginTurnSection(turnNumber) {
+  const gamelogElement = document.getElementById('gamelog');
+  if (!gamelogElement) return null;
+
+  gamelogElement.insertAdjacentHTML('beforeend', `
+    <div class="log-turn-section">
+      <div class="log-turn-header">Turn ${turnNumber}</div>
+      <div class="log-turn-content"></div>
+    </div>
+  `);
+
+  const turnSections = gamelogElement.querySelectorAll('.log-turn-section');
+  return turnSections[turnSections.length - 1].querySelector('.log-turn-content');
+}
+
+/** Syncs map controls after a map finishes loading. */
+export function onMapReady(mapNumber) {
+  const mapNumberInput = document.getElementById('mapNumberInput');
+  if (mapNumberInput) {
+    mapNumberInput.value = mapNumber;
+  }
+
+  const startBattleButton = document.getElementById('startBattleButton');
+  if (startBattleButton) {
+    startBattleButton.disabled = false;
+  }
+}
+
 /** Updates the hidden #mapStatus copy and visible map # / turn row. displayTurn is 1-based. */
 export function updateStatusBar(mapNumber, displayTurn) {
   const mapStatus = document.getElementById('mapStatus');
@@ -19,8 +79,25 @@ export function updateStatusBar(mapNumber, displayTurn) {
   }
 }
 
+function getLogEntryType(entry) {
+  for (const className of entry.classList) {
+    if (className.startsWith('log-') && className !== 'log-entry') {
+      return className.substring(4);
+    }
+  }
+  return '';
+}
+
+function setTurnNumberVisibility(entries, visible) {
+  entries.forEach(entry => {
+    const turnNumberSpan = entry.querySelector('.log-turn-number');
+    if (turnNumberSpan) {
+      turnNumberSpan.style.display = visible ? 'inline' : 'none';
+    }
+  });
+}
+
 export function initializeUI() {
-  // Auto-scroll game log to bottom
   const gamelogElement = document.getElementById('gamelog');
   if (gamelogElement) {
     const observer = new MutationObserver(function() {
@@ -29,85 +106,47 @@ export function initializeUI() {
     observer.observe(gamelogElement, { childList: true, subtree: true });
   }
 
-  // Log filtering and search
   const logSearch = document.getElementById('logSearch');
   const filterButtons = document.querySelectorAll('.log-filter-btn');
   let currentFilter = 'all';
   let searchTerm = '';
 
-  // Apply filters and search
+  function shouldShowTurnNumbers() {
+    return currentFilter !== 'all' || searchTerm.length > 0;
+  }
+
   function applyFilters() {
     if (!gamelogElement) return;
-    
-    // Determine if we should show turn numbers (when filters/search are active)
-    const shouldShowTurnNumbers = currentFilter !== 'all' || searchTerm.length > 0;
-    
-    // Find all log entries, including those nested in turn sections
+
+    const showTurnNumbers = shouldShowTurnNumbers();
     const entries = gamelogElement.querySelectorAll('.log-entry');
+
     entries.forEach(entry => {
-      // Extract the log type from classList (more reliable than regex on className string)
-      let entryType = '';
-      for (let className of entry.classList) {
-        if (className.startsWith('log-') && className !== 'log-entry') {
-          entryType = className.substring(4); // Remove 'log-' prefix
-          break;
-        }
-      }
-      
+      const entryType = getLogEntryType(entry);
       const entryText = entry.textContent.toLowerCase();
       const turnNumber = entry.dataset.turn || '';
       const turnText = turnNumber ? `turn ${turnNumber}` : '';
-      
+
       const matchesFilter = currentFilter === 'all' || entryType === currentFilter;
       const matchesSearch = !searchTerm || entryText.includes(searchTerm) || turnText.includes(searchTerm);
-      
-      if (matchesFilter && matchesSearch) {
-        entry.classList.remove('hidden');
-      } else {
-        entry.classList.add('hidden');
-      }
-      
-      // Toggle turn number visibility based on filter/search state
-      const turnNumberSpan = entry.querySelector('.log-turn-number');
-      if (turnNumberSpan) {
-        if (shouldShowTurnNumbers) {
-          turnNumberSpan.style.display = 'inline';
-        } else {
-          turnNumberSpan.style.display = 'none';
-        }
-      }
+      entry.classList.toggle('hidden', !(matchesFilter && matchesSearch));
     });
 
-    // Hide/show turn sections if all entries are hidden
-    const turnSections = gamelogElement.querySelectorAll('.log-turn-section');
-    turnSections.forEach(section => {
+    setTurnNumberVisibility(entries, showTurnNumbers);
+
+    gamelogElement.querySelectorAll('.log-turn-section').forEach(section => {
       const visibleEntries = section.querySelectorAll('.log-entry:not(.hidden)');
-      if (visibleEntries.length === 0) {
-        section.style.display = 'none';
-      } else {
-        section.style.display = 'block';
-      }
+      section.style.display = visibleEntries.length === 0 ? 'none' : 'block';
     });
   }
 
-  // Update log badge count and re-apply filters when new entries are added
   const logBadge = document.getElementById('logBadge');
   if (logBadge && gamelogElement) {
     const logObserver = new MutationObserver(function() {
-      // Count actual log entries (events only, not turn headers)
       const entries = gamelogElement.querySelectorAll('.log-entry');
       logBadge.textContent = entries.length;
-      
-      // Update turn number visibility for new entries based on current filter/search state
-      const shouldShowTurnNumbers = currentFilter !== 'all' || searchTerm.length > 0;
-      entries.forEach(entry => {
-        const turnNumberSpan = entry.querySelector('.log-turn-number');
-        if (turnNumberSpan) {
-          turnNumberSpan.style.display = shouldShowTurnNumbers ? 'inline' : 'none';
-        }
-      });
-      
-      // Re-apply filters when new entries are added (if filter is active)
+      setTurnNumberVisibility(entries, shouldShowTurnNumbers());
+
       if (currentFilter !== 'all' || searchTerm) {
         applyFilters();
       }
@@ -115,7 +154,6 @@ export function initializeUI() {
     logObserver.observe(gamelogElement, { childList: true, subtree: true });
   }
 
-  // Filter buttons
   filterButtons.forEach(btn => {
     btn.addEventListener('click', function() {
       filterButtons.forEach(b => b.classList.remove('active'));
@@ -125,7 +163,6 @@ export function initializeUI() {
     });
   });
 
-  // Search input
   if (logSearch) {
     logSearch.addEventListener('input', function() {
       searchTerm = this.value.toLowerCase();
@@ -133,36 +170,30 @@ export function initializeUI() {
     });
   }
 
-  // Collapsible turn sections
   if (gamelogElement) {
     gamelogElement.addEventListener('click', function(e) {
-      if (e.target.classList.contains('log-turn-header')) {
-        const header = e.target;
-        const content = header.nextElementSibling;
-        if (content && content.classList.contains('log-turn-content')) {
-          header.classList.toggle('collapsed');
-          content.classList.toggle('collapsed');
-        }
-      }
+      if (!e.target.classList.contains('log-turn-header')) return;
+
+      const content = e.target.nextElementSibling;
+      if (!content?.classList.contains('log-turn-content')) return;
+
+      e.target.classList.toggle('collapsed');
+      content.classList.toggle('collapsed');
     });
   }
 
-  // Info Panel tabs (Game Log / Statistics)
   const infoPanelTabs = document.querySelectorAll('.info-panel-tab');
   const infoPanelLog = document.getElementById('infoPanelLog');
   const infoPanelStats = document.getElementById('infoPanelStats');
 
   infoPanelTabs.forEach(tab => {
     tab.addEventListener('click', function() {
-      // Remove active class from all tabs and panels
       infoPanelTabs.forEach(t => t.classList.remove('active'));
       if (infoPanelLog) infoPanelLog.classList.remove('active');
       if (infoPanelStats) infoPanelStats.classList.remove('active');
-      
-      // Add active class to clicked tab
+
       this.classList.add('active');
-      
-      // Show corresponding panel
+
       const panelName = this.dataset.panel;
       if (panelName === 'log' && infoPanelLog) {
         infoPanelLog.classList.add('active');
@@ -172,7 +203,6 @@ export function initializeUI() {
     });
   });
 
-  // Statistics tab switching (within stats panel)
   const statsTabs = document.querySelectorAll('.stats-tab');
   const statsCharts = {
     cities: document.getElementById('statsChartCities'),
@@ -183,17 +213,13 @@ export function initializeUI() {
 
   statsTabs.forEach(tab => {
     tab.addEventListener('click', function() {
-      // Remove active class from all tabs
       statsTabs.forEach(t => t.classList.remove('active'));
-      // Add active class to clicked tab
       this.classList.add('active');
-      
-      // Hide all charts
+
       Object.values(statsCharts).forEach(chart => {
         if (chart) chart.style.display = 'none';
       });
-      
-      // Show selected chart
+
       const tabName = this.dataset.tab;
       if (statsCharts[tabName]) {
         statsCharts[tabName].style.display = 'block';
@@ -201,51 +227,9 @@ export function initializeUI() {
     });
   });
 
-  // Replay controls
-  const replayPlayBtn = document.getElementById('replayPlayBtn');
-  const replayPrevBtn = document.getElementById('replayPrevBtn');
-  const replayNextBtn = document.getElementById('replayNextBtn');
-  const replaySlider = document.getElementById('replaySlider');
-  const replayExitBtn = document.getElementById('replayExitBtn');
-  
-  if (replayPlayBtn) {
-    replayPlayBtn.addEventListener('click', function() {
-      if (window.game && window.game.replay && window.game.board) {
-        window.game.replay.togglePlay(window.game.board);
-      }
-    });
-  }
-  
-  if (replayPrevBtn) {
-    replayPrevBtn.addEventListener('click', function() {
-      if (window.game && window.game.replay && window.game.board) {
-        window.game.replay.previousTurn(window.game.board);
-      }
-    });
-  }
-  
-  if (replayNextBtn) {
-    replayNextBtn.addEventListener('click', function() {
-      if (window.game && window.game.replay && window.game.board) {
-        window.game.replay.nextTurn(window.game.board);
-      }
-    });
-  }
-  
-  if (replaySlider) {
-    replaySlider.addEventListener('input', function() {
-      if (window.game && window.game.replay && window.game.board) {
-        window.game.replay.goToTurn(parseInt(this.value), window.game.board);
-      }
-    });
-  }
-  
-  if (replayExitBtn) {
-    replayExitBtn.addEventListener('click', function() {
-      if (window.game && window.game.replay && window.game.board) {
-        window.game.replay.exitReplay(window.game.board);
-      }
-    });
-  }
+  bindReplayControl('replayPlayBtn', (replay, board) => replay.togglePlay(board));
+  bindReplayControl('replayPrevBtn', (replay, board) => replay.previousTurn(board));
+  bindReplayControl('replayNextBtn', (replay, board) => replay.nextTurn(board));
+  bindReplayControl('replayExitBtn', (replay, board) => replay.exitReplay(board));
+  bindReplaySlider('replaySlider');
 }
-
