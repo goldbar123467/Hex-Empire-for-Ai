@@ -2,6 +2,18 @@
  * Replay system for turn-by-turn game replay
  * Uses the main canvas to show full map state at each turn
  */
+function boardFieldKey(x, y) {
+  return `f${x}x${y}`;
+}
+
+function snapshotFieldKey(x, y) {
+  return `${x}x${y}`;
+}
+
+function emptyPartyLists() {
+  return [[], [], [], []];
+}
+
 class Replay {
   constructor() {
     this.snapshots = []; // Array of board state snapshots
@@ -47,78 +59,84 @@ class Replay {
     // Capture complete field states
     for (let x = 0; x < board.hw_xmax; x++) {
       for (let y = 0; y < board.hw_ymax; y++) {
-        const field = board.field["f" + x + "x" + y];
-        const key = `${x}x${y}`;
-        snapshot.fields[key] = {
-          party: field.party,
-          estate: field.estate || null,
-          capital: field.capital >= 0 ? field.capital : null,
-          town_name: field.town_name || null,
-          army: field.army ? {
-            party: field.army.party,
-            count: field.army.count,
-            morale: field.army.morale
-          } : null,
-          _x: field._x,
-          _y: field._y,
-          fx: field.fx,
-          fy: field.fy
-        };
+        const field = board.field[boardFieldKey(x, y)];
+        snapshot.fields[snapshotFieldKey(x, y)] = this.captureFieldSnapshot(field);
       }
     }
 
     this.snapshots.push(snapshot);
   }
 
+  captureFieldSnapshot(field) {
+    return {
+      party: field.party,
+      estate: field.estate || null,
+      capital: field.capital >= 0 ? field.capital : null,
+      town_name: field.town_name || null,
+      army: field.army ? {
+        party: field.army.party,
+        count: field.army.count,
+        morale: field.army.morale
+      } : null,
+      _x: field._x,
+      _y: field._y,
+      fx: field.fx,
+      fy: field.fy
+    };
+  }
+
   /**
    * Restore board state from a snapshot
    */
   restoreBoardState(board, snapshot) {
-    // Restore field states
     for (let x = 0; x < board.hw_xmax; x++) {
       for (let y = 0; y < board.hw_ymax; y++) {
-        const key = `${x}x${y}`;
-        const field = board.field["f" + x + "x" + y];
-        const snapshotField = snapshot.fields[key];
-        
+        const field = board.field[boardFieldKey(x, y)];
+        const snapshotField = snapshot.fields[snapshotFieldKey(x, y)];
         if (snapshotField) {
-          field.party = snapshotField.party;
-          field.estate = snapshotField.estate;
-          field.capital = snapshotField.capital !== null ? snapshotField.capital : -1;
-          field.town_name = snapshotField.town_name;
-          
-          // Restore army
-          if (snapshotField.army) {
-            if (!field.army) {
-              field.army = {};
-            }
-            field.army.party = snapshotField.army.party;
-            field.army.count = snapshotField.army.count;
-            field.army.morale = snapshotField.army.morale;
-          } else {
-            field.army = null;
-          }
+          this.restoreField(field, snapshotField);
         }
       }
     }
-    
-    // Update board arrays for territory borders
-    board.hw_parties_towns = [[], [], [], []];
-    board.hw_parties_ports = [[], [], [], []];
-    board.hw_parties_lands = [[], [], [], []];
-    
+
+    this.rebuildPartyTerritoryLists(board);
+  }
+
+  restoreField(field, snapshotField) {
+    field.party = snapshotField.party;
+    field.estate = snapshotField.estate;
+    field.capital = snapshotField.capital !== null ? snapshotField.capital : -1;
+    field.town_name = snapshotField.town_name;
+
+    if (snapshotField.army) {
+      if (!field.army) {
+        field.army = {};
+      }
+      field.army.party = snapshotField.army.party;
+      field.army.count = snapshotField.army.count;
+      field.army.morale = snapshotField.army.morale;
+    } else {
+      field.army = null;
+    }
+  }
+
+  /** Rebuilds each party's town/port/land lists from current field ownership (used for territory borders). */
+  rebuildPartyTerritoryLists(board) {
+    board.hw_parties_towns = emptyPartyLists();
+    board.hw_parties_ports = emptyPartyLists();
+    board.hw_parties_lands = emptyPartyLists();
+
     for (let x = 0; x < board.hw_xmax; x++) {
       for (let y = 0; y < board.hw_ymax; y++) {
-        const field = board.field["f" + x + "x" + y];
-        const party = field.party;
-        if (party >= 0) {
-          if (field.estate === "town") {
-            board.hw_parties_towns[party].push(field);
-          } else if (field.estate === "port") {
-            board.hw_parties_ports[party].push(field);
-          } else {
-            board.hw_parties_lands[party].push(field);
-          }
+        const field = board.field[boardFieldKey(x, y)];
+        if (field.party < 0) continue;
+
+        if (field.estate === "town") {
+          board.hw_parties_towns[field.party].push(field);
+        } else if (field.estate === "port") {
+          board.hw_parties_ports[field.party].push(field);
+        } else {
+          board.hw_parties_lands[field.party].push(field);
         }
       }
     }

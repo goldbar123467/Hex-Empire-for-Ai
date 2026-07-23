@@ -1,6 +1,17 @@
 import { Game } from './Game.js'
 import { initializeUI } from './UI.js'
 
+const MAX_MAP_NUMBER_DIGITS = 6;
+
+/** Sanitizes free-text map # input into an integer, picking a random map number when left blank. */
+function parseMapNumberInput(rawValue) {
+  const digitsOnly = rawValue.replace(/\D/g, '').substring(0, MAX_MAP_NUMBER_DIGITS);
+  if (digitsOnly === "") {
+    return Math.floor(Math.random() * 999999);
+  }
+  return parseInt(digitsOnly, 10);
+}
+
 $(function(){
   const game = new Game();
   window.game = game; // Make game accessible for replay controls
@@ -12,20 +23,7 @@ $(function(){
   var mapNumberInput = document.getElementById('mapNumberInput');
   var changeMapButton = document.getElementById('changeMapButton');
   changeMapButton.onclick = function() {
-    var mapNumber = mapNumberInput.value;
-    // remove all non-digits
-    mapNumber = mapNumber.replace(/\D/g,'');
-    if (mapNumber.length > 6) {
-      mapNumber = mapNumber.substring(0, 6);
-    }
-    if (mapNumber == "") {
-      mapNumber = Math.floor(Math.random() * 999999);
-    } else {
-      // convert to integer, since map number is expected as an integer
-      mapNumber = parseInt(mapNumber, 10);
-    }
-
-    game.generateNewMap(mapNumber);
+    game.generateNewMap(parseMapNumberInput(mapNumberInput.value));
   };
 
   var randomMapButton = document.getElementById('randomMapButton');
