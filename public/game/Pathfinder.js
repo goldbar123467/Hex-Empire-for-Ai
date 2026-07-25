@@ -82,19 +82,11 @@ class Pathfinder {
     if (!avoid_water) {
       return true;
     }
-    if (a.type == "water" && b.type == "water") {
-      return true;
+    // Leaving land for water is only possible from a port; every other type pairing is open.
+    if (a.type == "land" && b.type == "water") {
+      return a.estate == "port";
     }
-    if (a.type == "land" && b.type == "land") {
-      return true;
-    }
-    if (a.type == "water" && b.type == "land") {
-      return true;
-    }
-    if (b.type == "water" && a.estate == "port") {
-      return true;
-    }
-    return false;
+    return true;
   }
 
   getFieldStrO(field) {
