@@ -735,10 +735,7 @@ class Map {
   }
 
   getFieldParty(field) {
-    if (field.army) {
-      return field.army.party;
-    }
-    return field.party;
+    return field.army ? field.army.party : field.party;
   }
 
   listArmies(board) {
@@ -764,16 +761,10 @@ class Map {
       board.hw_parties_status[party] = -1;
       return;
     }
-    const otherCapitals = [];
     board.hw_parties_provinces_cp[party] = null;
-    for (let p = 0; p < board.hw_parties_count; p++) {
-      if (board.hw_parties_capitals[p].party == party
-        && p != party
-        && !board.hw_parties_armies[p].length
-      ) {
-        otherCapitals.push(board.hw_parties_capitals[p]);
-      }
-    }
+    const otherCapitals = board.hw_parties_capitals.filter((capital, p) =>
+      capital.party == party && p != party && !board.hw_parties_armies[p].length
+    );
     if (board.hw_parties_capitals[party].party != party) {
       // Original party no longer controls capital
       board.hw_parties_status[party] = 0;
@@ -788,13 +779,7 @@ class Map {
   }
 
   isVictory(board) {
-    for (let p = 0; p < board.hw_parties_count; p++) {
-      if (board.hw_parties_provinces_cp[p] &&
-        board.hw_parties_provinces_cp[p].length == board.hw_parties_count - 1) {
-        return true;
-      }
-    }
-    return false;
+    return board.hw_parties_provinces_cp.some((cp) => cp && cp.length == board.hw_parties_count - 1);
   }
 
   annexLand(party, field, board, startup) {
@@ -1110,12 +1095,7 @@ class Map {
   }
 
   getMovePoints(turnParty, board) {
-    let movePoints = 5;
-    const movableArmyCount = this.bot.getMovableArmies(turnParty, board).length;
-    if (movePoints > movableArmyCount) {
-      movePoints = movableArmyCount;
-    }
-    return movePoints;
+    return Math.min(5, this.bot.getMovableArmies(turnParty, board).length);
   }
 
   updateGameLog(message, type = 'info', board = null) {

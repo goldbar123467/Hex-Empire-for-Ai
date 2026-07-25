@@ -76,10 +76,8 @@ class Pathfinder {
     if (!a || !b) {
       return false;
     }
-    for (let n = 0; n < avoid_estate.length; n++) {
-      if (b.estate == avoid_estate[n]) {
-        return false;
-      }
+    if (avoid_estate.includes(b.estate)) {
+      return false;
     }
     if (!avoid_water) {
       return true;

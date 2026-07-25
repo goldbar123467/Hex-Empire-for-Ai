@@ -212,13 +212,7 @@ class Bot {
   }
 
   getMovableArmies(party, board) {
-    const movableArmies = [];
-    for (let i = 0; i < board.hw_parties_armies[party].length; i++) {
-      if (!board.hw_parties_armies[party][i].moved) {
-        movableArmies.push(board.hw_parties_armies[party][i]);
-      }
-    }
-    return movableArmies;
+    return board.hw_parties_armies[party].filter((army) => !army.moved);
   }
 }
 
