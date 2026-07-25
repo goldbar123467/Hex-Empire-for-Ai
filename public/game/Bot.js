@@ -9,13 +9,12 @@ class Bot {
   }
 
   calcArmiesProfitability(party, board) {
-    var self = this;
-    function finalProfitability(field, army) {
-      var totalProfitability = -10000000;
-      var canTakeCapital = false;
-      for (var partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
+    const finalProfitability = (field, army) => {
+      let totalProfitability = -10000000;
+      let canTakeCapital = false;
+      for (let partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
         if (partyIndex != party) {
-          var profitability = -10000000;
+          let profitability = -10000000;
           // Other party still owns original capital city (party is currently owning party, capital is original owner)
           if (board.hw_parties_capitals[partyIndex].party == board.hw_parties_capitals[partyIndex].capital) {
             profitability = field.profitability[partyIndex];
@@ -88,9 +87,9 @@ class Bot {
       if (army.field.capital == party && !field.army && board.turns < 5) {
         totalProfitability = totalProfitability + 50;
       }
-      var neighbour = self.calcNeighboursInfo(party, field);
-      var enemyNeighbour = self.calcEnemyNeighboursPower(party, field);
-      var fieldArmyTotal = field.army ? field.army.count + field.army.morale : 0;
+      const neighbour = this.calcNeighboursInfo(party, field);
+      const enemyNeighbour = this.calcEnemyNeighboursPower(party, field);
+      const fieldArmyTotal = field.army ? field.army.count + field.army.morale : 0;
       if ((neighbour.power < enemyNeighbour && neighbour.power < 300 || (army.count + army.morale < fieldArmyTotal) && army.count < 90)
         && !field.n_capital[party]
         && !canTakeCapital) {
@@ -105,19 +104,19 @@ class Bot {
           }
       }
       return totalProfitability;
-    }
-    function findBestMoveVal(army) {
-      var moves = self.pathfinder.getPossibleMoves(army.field, true, false);
-      for (var i = 0; i < moves.length; i++) {
+    };
+    const findBestMoveVal = (army) => {
+      const moves = this.pathfinder.getPossibleMoves(army.field, true, false);
+      for (let i = 0; i < moves.length; i++) {
         moves[i].wait_for_support = false;
         moves[i].tmp_prof = finalProfitability(moves[i], army);
       }
       moves.sort(sortMovesByTmpProfDesc);
       return moves[0];
-    }
-    var movableArmies = this.getMovableArmies(party, board);
-    for (var armyIndex = 0; armyIndex < movableArmies.length; armyIndex++) {
-      var bestMove = findBestMoveVal(movableArmies[armyIndex]);
+    };
+    const movableArmies = this.getMovableArmies(party, board);
+    for (let armyIndex = 0; armyIndex < movableArmies.length; armyIndex++) {
+      const bestMove = findBestMoveVal(movableArmies[armyIndex]);
       if (!bestMove) {
         console.warn("No move found for army: ", movableArmies[armyIndex]);
         continue;
@@ -132,14 +131,12 @@ class Bot {
   }
 
   calcNeighboursInfo(party, field) {
-    var power = 0;
-    var count = 0;
-    var nonEnemyLand = 0;
-    var waitForSupport = false;
-    var furtherNeighbours = this.pathfinder.getFurtherNeighbours(field);
-    // TODO: Should this be deleted?
-    // field.push.field;
-    for (var i = 0; i < furtherNeighbours.length; i++) {
+    let power = 0;
+    let count = 0;
+    let nonEnemyLand = 0;
+    let waitForSupport = false;
+    const furtherNeighbours = this.pathfinder.getFurtherNeighbours(field);
+    for (let i = 0; i < furtherNeighbours.length; i++) {
       if (!furtherNeighbours[i]) {
         continue;
       }
@@ -164,11 +161,9 @@ class Bot {
   }
 
   calcEnemyNeighboursPower(party, field) {
-    var furtherNeighbours = this.pathfinder.getFurtherNeighbours(field);
-    var power = 0;
-    // TODO: Should this be deleted?
-    // field.push.field;
-    for (var i = 0; i < furtherNeighbours.length; i++) {
+    const furtherNeighbours = this.pathfinder.getFurtherNeighbours(field);
+    let power = 0;
+    for (let i = 0; i < furtherNeighbours.length; i++) {
       if (!furtherNeighbours[i]) {
         continue;
       }
@@ -180,25 +175,24 @@ class Bot {
   }
 
   supportArmy(party, army, field, board) {
-    var self = this;
-    function findBestMoveVal(army) {
-      var moves = self.pathfinder.getPossibleMoves(army.field, true, false);
-      var supportMoves = [];
+    const findBestMoveVal = (army) => {
+      const moves = this.pathfinder.getPossibleMoves(army.field, true, false);
+      const supportMoves = [];
 
-      for (var i = 0; i < moves.length; i++) {
+      for (let i = 0; i < moves.length; i++) {
         if (moves[i] != field && (!moves[i].army || moves[i].army.party < 0 || moves[i].army.party == party)) {
-          moves[i].tmp_prof = -self.pathfinder.getDistance(moves[i], field);
+          moves[i].tmp_prof = -this.pathfinder.getDistance(moves[i], field);
           supportMoves.push(moves[i]);
         }
       }
       supportMoves.sort(sortMovesByTmpProfDesc);
       return supportMoves[0];
-    }
-    var moveableArmies = this.getMovableArmies(party, board);
-    var supportArmies = new Array();
-    for (var armyIndex = 0; armyIndex < moveableArmies.length; armyIndex++) {
+    };
+    const moveableArmies = this.getMovableArmies(party, board);
+    const supportArmies = [];
+    for (let armyIndex = 0; armyIndex < moveableArmies.length; armyIndex++) {
       if (moveableArmies[armyIndex] != army && moveableArmies[armyIndex].field.capital != party) {
-        var bestMove = findBestMoveVal(moveableArmies[armyIndex]);
+        const bestMove = findBestMoveVal(moveableArmies[armyIndex]);
         if (!bestMove) {
           console.warn("No move found for army: ", moveableArmies[armyIndex]);
           continue;
@@ -218,8 +212,8 @@ class Bot {
   }
 
   getMovableArmies(party, board) {
-    var movableArmies = [];
-    for (var i = 0; i < board.hw_parties_armies[party].length; i++) {
+    const movableArmies = [];
+    for (let i = 0; i < board.hw_parties_armies[party].length; i++) {
       if (!board.hw_parties_armies[party][i].moved) {
         movableArmies.push(board.hw_parties_armies[party][i]);
       }

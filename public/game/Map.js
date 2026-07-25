@@ -108,7 +108,7 @@ class Map {
     const adjustedY = screenY - offsetY;
     
     const fieldX = Math.floor((adjustedX - (board.hw_fw / 2)) / (board.hw_fw / 4 * 3)) + 1;
-    var fieldY;
+    let fieldY;
     if (fieldX % 2 == 0) {
       fieldY = Math.floor((adjustedY - (board.hw_fh / 2)) / board.hw_fh) + 1;
     } else {
@@ -154,10 +154,10 @@ class Map {
   }
 
   shuffle(arr) {
-    var arrayCopy = [...arr];
-    for (var index = 0; index < arrayCopy.length; index++) {
-      var tmp = arrayCopy[index];
-      var rn = this.rand(arrayCopy.length);
+    const arrayCopy = [...arr];
+    for (let index = 0; index < arrayCopy.length; index++) {
+      const tmp = arrayCopy[index];
+      const rn = this.rand(arrayCopy.length);
 
       // Swap with random index
       arrayCopy[index] = arrayCopy[rn];
@@ -167,8 +167,8 @@ class Map {
   }
 
   randTown() {
-    var cnr = this.rand(this.towns.length);
-    var cname = this.towns[cnr];
+    const cnr = this.rand(this.towns.length);
+    const cname = this.towns[cnr];
     this.towns[cnr] = this.towns[0];
     this.towns[0] = cname;
     return this.towns.shift();
@@ -255,9 +255,9 @@ class Map {
     board.background_2.width = 800;
     board.background_2.height = 600;
 
-    var gridImages = new Array(6 * 4);
-    for (var x = 0; x < 6; x++) {
-      for (var y = 0; y < 4; y++) {
+    const gridImages = new Array(6 * 4);
+    for (let x = 0; x < 6; x++) {
+      for (let y = 0; y < 4; y++) {
         const index = (x * 4) + y;
         gridImages[index] = {
           dirtBg: new Image(),
@@ -277,9 +277,9 @@ class Map {
         const rotateDegrees = this.rand(4) * 90;
 
         const ctx = board.background_2.getContext('2d');
-        var img = gridImages[index].grassBg;
-        var destX = (x * 125) - 15;
-        var destY = (y * 125) - 15;
+        const img = gridImages[index].grassBg;
+        const destX = (x * 125) - 15;
+        const destY = (y * 125) - 15;
 
         ctx.translate(destX, destY);
         this.rotateImageMatrix(ctx, img, rotateDegrees);
@@ -288,7 +288,7 @@ class Map {
         ctx.drawImage(img, 0, 0);
         ctx.resetTransform();
 
-        let region = new Path2D();
+        const region = new Path2D();
         region.rect(0, 0, 800, 465);
         ctx.clip(region);
       }
@@ -325,7 +325,7 @@ class Map {
   generateMap(board) {
     this.createBackground(board);
 
-    for (var p = 0; p < board.hw_parties_count; p++) {
+    for (let p = 0; p < board.hw_parties_count; p++) {
       if (!board["pb" + p]) {
         // Used to color occupied tiles
         board["pb" + p] = {};
@@ -335,15 +335,15 @@ class Map {
     board.background_sea.width = 800;
     board.background_sea.height = 600;
 
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
         this.addField(x, y, board);
       }
     }
 
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
-        var field = this.getField(x, y, board);
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
+        const field = this.getField(x, y, board);
         this.findNeighbours(field, board);
       }
     }
@@ -377,12 +377,12 @@ class Map {
   }
 
   setLandFields(board) {
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
-        var field = this.getField(x, y, board);
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
+        const field = this.getField(x, y, board);
         if (field.type == "water") {
-          var land = 0;
-          for (var n = 0; n < 6; n++) {
+          let land = 0;
+          for (let n = 0; n < 6; n++) {
             if (!field.neighbours[n]) {
               continue;
             }
@@ -397,20 +397,20 @@ class Map {
       }
     }
 
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
         if (this.getField(x, y, board).tl) {
           this.getField(x, y, board).type = "land";
         }
       }
     }
 
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
-        var field = this.getField(x, y, board);
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
+        const field = this.getField(x, y, board);
         if (field.type == "water") {
-          var water = 0;
-          for (var n = 0; n < 6; n++) {
+          let water = 0;
+          for (let n = 0; n < 6; n++) {
             if (!field.neighbours[n]) {
               continue;
             }
@@ -427,24 +427,24 @@ class Map {
   }
 
   generateHwLands(board) {
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
         if (this.getField(x, y, board).type == "land") {
           board.hw_land = board.hw_land + 1;
         }
       }
     }
 
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
         if (this.getField(x, y, board).type == "land" && this.getField(x, y, board).land_id < 0) {
-          var clid = board.hw_lands.length;
-          board.hw_lands.push(new Array());
+          const clid = board.hw_lands.length;
+          board.hw_lands.push([]);
           board.hw_lands[clid].push(this.getField(x, y, board));
           this.getField(x, y, board).land_id = clid;
-          var add_ngb2l = function(field, lid) {
-            var newf = 0;
-            for (var n = 0; n < 6; n++) {
+          const addNeighboursToLand = (field, lid) => {
+            let newf = 0;
+            for (let n = 0; n < 6; n++) {
               if (field.neighbours[n] && field.neighbours[n].type == "land" && field.neighbours[n].land_id < 0) {
                 board.hw_lands[lid].push(field.neighbours[n]);
                 field.neighbours[n].land_id = lid;
@@ -453,10 +453,10 @@ class Map {
             }
             return newf;
           };
-          var cc = 0;
-          var cnr = cc;
+          let cc = 0;
+          let cnr = cc;
           while (cc >= cnr) {
-            cc = cc + add_ngb2l(board.hw_lands[clid][cnr],clid);
+            cc = cc + addNeighboursToLand(board.hw_lands[clid][cnr],clid);
             cnr++;
           }
         }
@@ -465,21 +465,21 @@ class Map {
   }
 
   generateTowns(board) {
-    for (var landNum = 0; landNum < board.hw_lands.length; landNum++) {
-      var townCount = Math.floor(board.hw_lands[landNum].length / 10) + 1;
-      for (var townNum = 0; townNum < townCount; townNum++) {
-        var created = false;
-        var attempts = 0;
+    for (let landNum = 0; landNum < board.hw_lands.length; landNum++) {
+      const townCount = Math.floor(board.hw_lands[landNum].length / 10) + 1;
+      for (let townNum = 0; townNum < townCount; townNum++) {
+        let created = false;
+        let attempts = 0;
         while (!created) {
           attempts++;
           if (attempts > 10) {
             created = true;
           }
-          var nt = this.rand(board.hw_lands[landNum].length);
+          const nt = this.rand(board.hw_lands[landNum].length);
           if (!board.hw_lands[landNum][nt].estate) {
-            var ok = true;
-            for (var n = 0; n < 6; n++) {
-              var field = board.hw_lands[landNum][nt];
+            let ok = true;
+            for (let n = 0; n < 6; n++) {
+              const field = board.hw_lands[landNum][nt];
               if (!field.neighbours[n]) {
                 continue;
               }
@@ -499,15 +499,13 @@ class Map {
   }
 
   generatePorts(board) {
-    var portNum = 0;
-    var pn = 0;
-    for (var town = 0; town < board.hw_towns.length - 1; town++) {
-      var path = this.pathfinder.findPath(board.hw_towns[town], board.hw_towns[town + 1], ["town"], true);
+    let portNum = 0;
+    for (let town = 0; town < board.hw_towns.length - 1; town++) {
+      let path = this.pathfinder.findPath(board.hw_towns[town], board.hw_towns[town + 1], ["town"], true);
       if (path == null || path.length > portNum) {
         path = this.pathfinder.findPath(board.hw_towns[town], board.hw_towns[town + 1], ["town"], false);
-        pn++;
       }
-      for (var pathIndex = 1; pathIndex < path.length - 1; pathIndex++) {
+      for (let pathIndex = 1; pathIndex < path.length - 1; pathIndex++) {
         if (path[pathIndex].type == "land" && path[pathIndex + 1].type == "water") {
           path[pathIndex].estate = "port";
           portNum++;
@@ -559,19 +557,19 @@ class Map {
   }
 
   unitsSpawn(party, board) {
-    var ucount = board.hw_parties_lands[party].length + board.hw_parties_ports[party].length * 5;
+    let ucount = board.hw_parties_lands[party].length + board.hw_parties_ports[party].length * 5;
     ucount = Math.floor(ucount / board.hw_parties_towns[party].length);
-    for (var partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
+    for (let partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
       if (board.hw_parties_capitals[partyIndex].party == party) {
-        var morale = board.hw_parties_morale[party];
+        let morale = board.hw_parties_morale[party];
         if (board.hw_parties_capitals[partyIndex].army) {
           morale = board.hw_parties_capitals[partyIndex].army.morale;
         }
         this.joinUnits(5, morale, party, board, null, board.hw_parties_capitals[partyIndex]);
       }
     }
-    for (var townIndex = 0; townIndex < board.hw_parties_towns[party].length; townIndex++) {
-      var morale = board.hw_parties_morale[party];
+    for (let townIndex = 0; townIndex < board.hw_parties_towns[party].length; townIndex++) {
+      let morale = board.hw_parties_morale[party];
       if (board.hw_parties_towns[party][townIndex].army) {
         morale = board.hw_parties_towns[party][townIndex].army.morale;
       }
@@ -608,8 +606,8 @@ class Map {
         return;
       }
       board.hw_lAID = board.hw_lAID + 1;
-      var alevel = -1; // TODO: find better value
-      var aname = `army${board.hw_lAID}`;
+      const alevel = -1; // TODO: find better value
+      const aname = `army${board.hw_lAID}`;
       board.armies[aname] = {};
       board.hw_aTL = alevel;
       board.armies[aname]._x = field._x;
@@ -638,19 +636,19 @@ class Map {
   }
 
   calcAIHelpers(board) {
-    for (var partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
-      for (var x = 0; x < board.hw_xmax; x++) {
-        for (var y = 0; y < board.hw_ymax; y++) {
-          var field = this.getField(x, y, board);
-          var path = this.pathfinder.findPath(field, board.hw_parties_capitals[partyIndex], [], true);
+    for (let partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
+      for (let x = 0; x < board.hw_xmax; x++) {
+        for (let y = 0; y < board.hw_ymax; y++) {
+          const field = this.getField(x, y, board);
+          const path = this.pathfinder.findPath(field, board.hw_parties_capitals[partyIndex], [], true);
           if (!path) {
             console.warn(`Path is undefined for (${x},${y})`);
             continue;
           }
           field.profitability[partyIndex] = -path.length;
-          var neighbours = this.pathfinder.getFurtherNeighbours(field);
+          const neighbours = this.pathfinder.getFurtherNeighbours(field);
           neighbours.push(field);
-          for (var n = 0; n < neighbours.length; n++) {
+          for (let n = 0; n < neighbours.length; n++) {
             if (!neighbours[n]) {
               continue;
             }
@@ -667,8 +665,8 @@ class Map {
   }
 
   cleanupTurn(board) {
-    var partyArmies = board.hw_parties_armies[board.turn_party];
-    for (var armyIndex = 0; armyIndex < partyArmies.length; armyIndex++) {
+    const partyArmies = board.hw_parties_armies[board.turn_party];
+    for (let armyIndex = 0; armyIndex < partyArmies.length; armyIndex++) {
       if (partyArmies[armyIndex].moved) {
         partyArmies[armyIndex].moved = false;
       } else {
@@ -679,16 +677,16 @@ class Map {
 
   updateBoard(board) {
     this.listArmies(board);
-    for (var p = 0; p < board.hw_parties_count; p++) {
+    for (let p = 0; p < board.hw_parties_count; p++) {
       this.checkPartyState(p, board);
     }
     board.hw_parties_towns = emptyPartyArrays();
     board.hw_parties_ports = emptyPartyArrays();
     board.hw_parties_lands = emptyPartyArrays();
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
-        var field = this.getField(x, y, board);
-        var party = field.party;
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
+        const field = this.getField(x, y, board);
+        const party = field.party;
         this.updateField(field, board);
 
         const targetParty = this.getFieldParty(field);
@@ -712,10 +710,10 @@ class Map {
         }
       }
     }
-    for (var partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
-      var morale = 0;
+    for (let partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
+      let morale = 0;
       if (board.hw_parties_armies[partyIndex].length > 0) {
-        for (var armyIndex = 0; armyIndex < board.hw_parties_armies[partyIndex].length; armyIndex++) {
+        for (let armyIndex = 0; armyIndex < board.hw_parties_armies[partyIndex].length; armyIndex++) {
           if (board.hw_parties_armies[partyIndex][armyIndex].morale < Math.floor(board.hw_parties_total_count[partyIndex] / 50)) {
             board.hw_parties_armies[partyIndex][armyIndex].morale = Math.floor(board.hw_parties_total_count[partyIndex] / 50);
             // Morale can't be greater than the number of units
@@ -731,9 +729,9 @@ class Map {
       }
       board.hw_parties_morale[partyIndex] = Math.floor(morale);
     }
-    var humanTotalPower = board.hw_parties_morale[board.human] + board.hw_parties_total_count[board.human];
-    var humanCondition = 1;
-    for (var partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
+    const humanTotalPower = board.hw_parties_morale[board.human] + board.hw_parties_total_count[board.human];
+    let humanCondition = 1;
+    for (let partyIndex = 0; partyIndex < board.hw_parties_count; partyIndex++) {
       if (partyIndex != board.human && board.hw_parties_status[partyIndex]) {
         if (humanTotalPower < 0.3 * (board.hw_parties_morale[partyIndex] + board.hw_parties_total_count[partyIndex])) {
           humanCondition = 3;
@@ -758,13 +756,13 @@ class Map {
   }
 
   listArmies(board) {
-    for (var p = 0; p < board.hw_parties_count; p++) {
+    for (let p = 0; p < board.hw_parties_count; p++) {
       board.hw_parties_armies[p] = [];
       board.hw_parties_total_count[p] = 0;
       board.hw_parties_total_power[p] = 0;
     }
-    for (var x = 0; x < board.hw_xmax; x++) {
-      for (var y = 0; y < board.hw_ymax; y++) {
+    for (let x = 0; x < board.hw_xmax; x++) {
+      for (let y = 0; y < board.hw_ymax; y++) {
         if (this.getField(x, y, board).army && this.getField(x, y, board).army.remove_time < 0) {
           const armyParty = this.getField(x, y, board).army.party;
           board.hw_parties_armies[armyParty].push(this.getField(x, y, board).army);
@@ -780,9 +778,9 @@ class Map {
       board.hw_parties_status[party] = -1;
       return;
     }
-    var otherCapitals = [];
+    const otherCapitals = [];
     board.hw_parties_provinces_cp[party] = null;
-    for (var p = 0; p < board.hw_parties_count; p++) {
+    for (let p = 0; p < board.hw_parties_count; p++) {
       if (board.hw_parties_capitals[p].party == party
         && p != party
         && !board.hw_parties_armies[p].length
@@ -804,7 +802,7 @@ class Map {
   }
 
   isVictory(board) {
-    for (var p = 0; p < board.hw_parties_count; p++) {
+    for (let p = 0; p < board.hw_parties_count; p++) {
       if (board.hw_parties_provinces_cp[p] &&
         board.hw_parties_provinces_cp[p].length == board.hw_parties_count - 1) {
         return true;
@@ -814,13 +812,12 @@ class Map {
   }
 
   annexLand(party, field, board, startup) {
-    var self = this;
-    function moraleEarned(party, field) {
+    const moraleEarned = (party, field) => {
       if (field.capital >= 0) {
         if (board.human == party
           && board.hw_parties_provinces_cp[party]
           && board.hw_parties_provinces_cp[party].length >= 2) {
-          self.updateBoard(board);
+          this.updateBoard(board);
           board.win = true;
         }
         if (field.capital == field.party) {
@@ -828,13 +825,13 @@ class Map {
             board.subject = field;
             board.news = "province_conquered";
           }
-          self.updateGameLog(`${board.hw_parties_names[party]} conquered ${board.hw_parties_names[field.party]}`, 'conquest', board);
+          this.updateGameLog(`${board.hw_parties_names[party]} conquered ${board.hw_parties_names[field.party]}`, 'conquest', board);
           return [50, 30];
         }
         if (board.human == party) {
           board.subject = field;
           board.news = "town_captured";
-          self.updateGameLog(`${board.hw_parties_names[party]} captured former ${board.hw_parties_names[field.party]} capital city from ${board.hw_parties_names[field.party]}`, 'conquest', board);
+          this.updateGameLog(`${board.hw_parties_names[party]} captured former ${board.hw_parties_names[field.party]} capital city from ${board.hw_parties_names[field.party]}`, 'conquest', board);
         }
         return [30, 20];
       }
@@ -843,10 +840,10 @@ class Map {
           board.subject = field;
           if (field.party >= 0) {
             board.news = "town_captured";
-            self.updateGameLog(`${board.hw_parties_names[party]} captured town ${field.town_name} from ${board.hw_parties_names[field.party]}`, 'capture', board);
+            this.updateGameLog(`${board.hw_parties_names[party]} captured town ${field.town_name} from ${board.hw_parties_names[field.party]}`, 'capture', board);
           } else {
             board.news = "town_annexed";
-            self.updateGameLog(`${board.hw_parties_names[party]} annexed town ${field.town_name}`, 'annex', board);
+            this.updateGameLog(`${board.hw_parties_names[party]} annexed town ${field.town_name}`, 'annex', board);
           }
         }
         return [10, 10];
@@ -856,10 +853,10 @@ class Map {
           board.subject = field;
           if (field.party >= 0) {
             board.news = "town_captured";
-            self.updateGameLog(`${board.hw_parties_names[party]} captured port ${field.town_name} from ${board.hw_parties_names[field.party]}`, 'capture', board);
+            this.updateGameLog(`${board.hw_parties_names[party]} captured port ${field.town_name} from ${board.hw_parties_names[field.party]}`, 'capture', board);
           } else {
             board.news = "town_annexed";
-            self.updateGameLog(`${board.hw_parties_names[party]} annexed port ${field.town_name}`, 'annex', board);
+            this.updateGameLog(`${board.hw_parties_names[party]} annexed port ${field.town_name}`, 'annex', board);
           }
         }
         return [5, 5];
@@ -868,11 +865,11 @@ class Map {
          return [1, 0];
       }
       return [0, 0];
-   }
-    function moraleLost(party, field) {
+    };
+    const moraleLost = (party, field) => {
       if (field.capital == party) {
         if (board.human == party) {
-          self.updateBoard(board);
+          this.updateBoard(board);
           board.win = false;
         }
       } else {
@@ -899,7 +896,7 @@ class Map {
         }
       }
       return 0;
-    }
+    };
 
     if (!field.army && !startup) {
       return;
@@ -912,7 +909,7 @@ class Map {
           && board.hw_parties_provinces_cp[field.party]
           && board.hw_parties_provinces_cp[field.party].length) {
           // If you conquer another party that has control of capitals other than their own, liberate those capitals
-          for (var capitalIndex = 0; capitalIndex < board.hw_parties_provinces_cp[field.party].length; capitalIndex++) {
+          for (let capitalIndex = 0; capitalIndex < board.hw_parties_provinces_cp[field.party].length; capitalIndex++) {
             if (board.hw_parties_provinces_cp[field.party][capitalIndex].army) {
               this.setExplosion(board.hw_parties_provinces_cp[field.party][capitalIndex].army, board.hw_parties_provinces_cp[field.party][capitalIndex].army, null);
               board.hw_parties_provinces_cp[field.party][capitalIndex].army = null;
@@ -927,7 +924,7 @@ class Map {
         this.addMoraleForAA(moraleEarned(party,field), field.army, board);
       }
       field.party = party;
-      for (var n = 0; n < 6; n++) {
+      for (let n = 0; n < 6; n++) {
         if (!field.neighbours[n]) {
           continue;
         }
@@ -982,7 +979,7 @@ class Map {
   }
 
   moveArmy(army, field, board) {
-    var afield = army.field;
+    const afield = army.field;
     this.updateGameLog(`${board.hw_parties_names[army.party]} moved unit from (${army.field.fx},${army.field.fy}) to (${field.fx},${field.fy})`, 'move', board);
 
     // Pact was just broken
@@ -1008,7 +1005,7 @@ class Map {
         this.joinUnits(army.count, army.morale, army.party, board, field.army);
       } else {
         // Only move enough units to fill other army up to 99 units
-        var chng = field.army.count + army.count - 99;
+        const chng = field.army.count + army.count - 99;
         this.joinUnits(99 - field.army.count, army.morale, army.party, board, field.army);
         this.joinUnits(chng, army.morale, army.party, board, null, afield);
       }
@@ -1025,12 +1022,12 @@ class Map {
   }
 
   attack(army1, field, board) {
-    var army2 = field.army;
+    const army2 = field.army;
     if (!army2) {
       return true;
     }
-    var army1_pw = army1.count + army1.morale;
-    var army2_pw = army2.count + army2.morale;
+    const army1_pw = army1.count + army1.morale;
+    const army2_pw = army2.count + army2.morale;
     if (army1_pw > army2_pw) {
       this.addMoraleForAll(-Math.floor(army2.count / 10), army2.party, board);
       army1.count = army1.count - Math.floor(army2_pw / army1_pw * army1.count);
@@ -1086,7 +1083,7 @@ class Map {
     if (morale == 0) {
       return;
     }
-    for (var armyIndex = 0; armyIndex < board.hw_parties_armies[party].length; armyIndex++) {
+    for (let armyIndex = 0; armyIndex < board.hw_parties_armies[party].length; armyIndex++) {
       this.addMorale(morale, board.hw_parties_armies[party][armyIndex]);
     }
   }
@@ -1099,8 +1096,7 @@ class Map {
   }
 
   updateArmies(board) {
-    for (const [key, value] of Object.entries(board.armies)) {
-      var army = value;
+    for (const [key, army] of Object.entries(board.armies)) {
       if (board.hw_parties_status[army.party] == 0) {
         this.deleteArmy(army);
         delete board.armies[key];
@@ -1128,8 +1124,8 @@ class Map {
   }
 
   getMovePoints(turnParty, board) {
-    var movePoints = 5;
-    var movableArmyCount = this.bot.getMovableArmies(turnParty, board).length;
+    let movePoints = 5;
+    const movableArmyCount = this.bot.getMovableArmies(turnParty, board).length;
     if (movePoints > movableArmyCount) {
       movePoints = movableArmyCount;
     }
