@@ -1,3 +1,4 @@
+const MAX_ARMY_SIZE = 99;
 
 class Pathfinder {
   findPath(startf, endf, avoid_estate, avoid_water) {
@@ -120,28 +121,16 @@ class Pathfinder {
   }
 
   getFurtherNeighbours(field) {
+    // Edge index -> the neighbour's own edge indices that lie one ring further out.
+    const secondRingEdges = [[0, 1], [1, 2], [2], [3, 4], [4, 5], [5]];
     const additionalNeighbours = [];
-    if (field.neighbours[0]) {
-      additionalNeighbours.push(field.neighbours[0].neighbours[0]);
-      additionalNeighbours.push(field.neighbours[0].neighbours[1]);
-    }
-    if (field.neighbours[1]) {
-      additionalNeighbours.push(field.neighbours[1].neighbours[1]);
-      additionalNeighbours.push(field.neighbours[1].neighbours[2]);
-    }
-    if (field.neighbours[2]) {
-      additionalNeighbours.push(field.neighbours[2].neighbours[2]);
-    }
-    if (field.neighbours[3]) {
-      additionalNeighbours.push(field.neighbours[3].neighbours[3]);
-      additionalNeighbours.push(field.neighbours[3].neighbours[4]);
-    }
-    if (field.neighbours[4]) {
-      additionalNeighbours.push(field.neighbours[4].neighbours[4]);
-      additionalNeighbours.push(field.neighbours[4].neighbours[5]);
-    }
-    if (field.neighbours[5]) {
-      additionalNeighbours.push(field.neighbours[5].neighbours[5]);
+    for (let edge = 0; edge < secondRingEdges.length; edge++) {
+      if (!field.neighbours[edge]) {
+        continue;
+      }
+      for (const subEdge of secondRingEdges[edge]) {
+        additionalNeighbours.push(field.neighbours[edge].neighbours[subEdge]);
+      }
     }
 
     additionalNeighbours.push(!field.neighbours[0] ? (field.neighbours[5] ? field.neighbours[5].neighbours[0] : undefined) : field.neighbours[0].neighbours[5]);
@@ -167,7 +156,7 @@ class Pathfinder {
           return false;
         }
       }
-      return field1.army.party != field2.army.party || field1.type != "water" && field1.army.count < 99;
+      return field1.army.party != field2.army.party || field1.type != "water" && field1.army.count < MAX_ARMY_SIZE;
     };
     const reachableFields = no_self ? [] : [field];
 

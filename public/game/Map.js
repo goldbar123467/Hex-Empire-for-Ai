@@ -3,6 +3,7 @@ import { Pathfinder } from './Pathfinder.js'
 import { resetGameLog } from './UI.js'
 
 const PARTY_COUNT = 4;
+const MAX_ARMY_SIZE = 99;
 
 function fieldKey(x, y) {
   return `f${x}x${y}`;
@@ -200,22 +201,11 @@ class Map {
   }
 
   findNeighbours(field, board) {
-    field.neighbours = new Array(6);
-    if (field.fx % 2 == 0) {
-      field.neighbours[0] = this.getField(field.fx + 1, field.fy, board);
-      field.neighbours[1] = this.getField(field.fx, field.fy + 1, board);
-      field.neighbours[2] = this.getField(field.fx - 1, field.fy, board);
-      field.neighbours[3] = this.getField(field.fx - 1, field.fy - 1, board);
-      field.neighbours[4] = this.getField(field.fx, field.fy - 1, board);
-      field.neighbours[5] = this.getField(field.fx + 1, field.fy - 1, board);
-    } else {
-      field.neighbours[0] = this.getField(field.fx + 1, field.fy + 1, board);
-      field.neighbours[1] = this.getField(field.fx, field.fy + 1, board);
-      field.neighbours[2] = this.getField(field.fx - 1, field.fy + 1, board);
-      field.neighbours[3] = this.getField(field.fx - 1, field.fy, board);
-      field.neighbours[4] = this.getField(field.fx, field.fy - 1, board);
-      field.neighbours[5] = this.getField(field.fx + 1, field.fy, board);
-    }
+    // Neighbour offsets [dx, dy] by direction (0-5), for even vs odd columns.
+    const offsetsEven = [[1, 0], [0, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+    const offsetsOdd = [[1, 1], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, 0]];
+    const offsets = field.fx % 2 == 0 ? offsetsEven : offsetsOdd;
+    field.neighbours = offsets.map(([dx, dy]) => this.getField(field.fx + dx, field.fy + dy, board));
   }
 
   flipImageMatrix(ctx, image, flipH, flipV) {
@@ -248,9 +238,6 @@ class Map {
   }
 
   createBackground(board) {
-    board.background_1 = document.createElement('canvas');
-    board.background_1.width = 800;
-    board.background_1.height = 600;
     board.background_2 = document.createElement('canvas');
     board.background_2.width = 800;
     board.background_2.height = 600;
@@ -312,7 +299,6 @@ class Map {
     nfield.party = -1;
     nfield.capital = -1;
     nfield.n_town = false;
-    nfield.n_capital = false;
     nfield.army = null;
 
     nfield.profitability = [0,0,0,0];
@@ -627,7 +613,7 @@ class Map {
       this.deleteArmy(army);
       return;
     }
-    army.count = count >= 100 ? 99 : count;
+    army.count = count > MAX_ARMY_SIZE ? MAX_ARMY_SIZE : count;
     if (morale < 0) {
       morale = 0;
     }
@@ -915,7 +901,7 @@ class Map {
               board.hw_parties_provinces_cp[field.party][capitalIndex].army = null;
             }
             // Liberate capitals and give original owner new army
-            this.updateArmy(99, 99, board.hw_parties_provinces_cp[field.party][capitalIndex].capital, board, null, board.hw_parties_provinces_cp[field.party][capitalIndex]);
+            this.updateArmy(MAX_ARMY_SIZE, MAX_ARMY_SIZE, board.hw_parties_provinces_cp[field.party][capitalIndex].capital, board, null, board.hw_parties_provinces_cp[field.party][capitalIndex]);
             this.annexLand(board.hw_parties_provinces_cp[field.party][capitalIndex].capital, board.hw_parties_provinces_cp[field.party][capitalIndex], board, true);
           }
         }
@@ -1001,12 +987,12 @@ class Map {
       }
     } else if (field.army && field.party == army.party) {
       // Unit is joining with other friendly units
-      if (field.army.count + army.count <= 99) {
+      if (field.army.count + army.count <= MAX_ARMY_SIZE) {
         this.joinUnits(army.count, army.morale, army.party, board, field.army);
       } else {
-        // Only move enough units to fill other army up to 99 units
-        const chng = field.army.count + army.count - 99;
-        this.joinUnits(99 - field.army.count, army.morale, army.party, board, field.army);
+        // Only move enough units to fill other army up to the max
+        const chng = field.army.count + army.count - MAX_ARMY_SIZE;
+        this.joinUnits(MAX_ARMY_SIZE - field.army.count, army.morale, army.party, board, field.army);
         this.joinUnits(chng, army.morale, army.party, board, null, afield);
       }
       this.setArmyRemoval(army, field.army);
