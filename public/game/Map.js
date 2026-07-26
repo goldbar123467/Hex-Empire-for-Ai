@@ -424,26 +424,29 @@ class Map {
     for (let x = 0; x < board.hw_xmax; x++) {
       for (let y = 0; y < board.hw_ymax; y++) {
         if (this.getField(x, y, board).type == "land" && this.getField(x, y, board).land_id < 0) {
-          const clid = board.hw_lands.length;
+          const landId = board.hw_lands.length;
           board.hw_lands.push([]);
-          board.hw_lands[clid].push(this.getField(x, y, board));
-          this.getField(x, y, board).land_id = clid;
-          const addNeighboursToLand = (field, lid) => {
-            let newf = 0;
+          board.hw_lands[landId].push(this.getField(x, y, board));
+          this.getField(x, y, board).land_id = landId;
+          // Adds field's unclaimed land neighbours to this region (closes over landId above).
+          const addNeighboursToLand = (field) => {
+            let queuedCount = 0;
             for (let n = 0; n < 6; n++) {
               if (field.neighbours[n] && field.neighbours[n].type == "land" && field.neighbours[n].land_id < 0) {
-                board.hw_lands[lid].push(field.neighbours[n]);
-                field.neighbours[n].land_id = lid;
-                newf++;
+                board.hw_lands[landId].push(field.neighbours[n]);
+                field.neighbours[n].land_id = landId;
+                queuedCount++;
               }
             }
-            return newf;
+            return queuedCount;
           };
-          let cc = 0;
-          let cnr = cc;
-          while (cc >= cnr) {
-            cc = cc + addNeighboursToLand(board.hw_lands[clid][cnr],clid);
-            cnr++;
+          // Breadth-first flood fill: board.hw_lands[landId] is itself the growing BFS queue -
+          // expandIndex walks forward through it while lastQueuedIndex tracks how far it's grown.
+          let lastQueuedIndex = 0;
+          let expandIndex = lastQueuedIndex;
+          while (lastQueuedIndex >= expandIndex) {
+            lastQueuedIndex = lastQueuedIndex + addNeighboursToLand(board.hw_lands[landId][expandIndex]);
+            expandIndex++;
           }
         }
       }
@@ -592,10 +595,9 @@ class Map {
         return;
       }
       board.hw_lAID = board.hw_lAID + 1;
-      const alevel = -1; // TODO: find better value
       const aname = `army${board.hw_lAID}`;
       board.armies[aname] = {};
-      board.hw_aTL = alevel;
+      board.hw_aTL = -1; // TODO: find better value
       board.armies[aname]._x = field._x;
       board.armies[aname]._y = field._y;
       board.armies[aname].field = field;
@@ -797,14 +799,14 @@ class Map {
             board.news = "province_conquered";
           }
           this.updateGameLog(`${board.hw_parties_names[party]} conquered ${board.hw_parties_names[field.party]}`, 'conquest', board);
-          return [50, 30];
+          return { allUnitsWithinParty: 50, capturingArmy: 30 };
         }
         if (board.human == party) {
           board.subject = field;
           board.news = "town_captured";
           this.updateGameLog(`${board.hw_parties_names[party]} captured former ${board.hw_parties_names[field.party]} capital city from ${board.hw_parties_names[field.party]}`, 'conquest', board);
         }
-        return [30, 20];
+        return { allUnitsWithinParty: 30, capturingArmy: 20 };
       }
       if (field.estate == "town") {
         if (/*board.human == party && */ (!board.subject || board.subject.capital < 0)) {
@@ -817,7 +819,7 @@ class Map {
             this.updateGameLog(`${board.hw_parties_names[party]} annexed town ${field.town_name}`, 'annex', board);
           }
         }
-        return [10, 10];
+        return { allUnitsWithinParty: 10, capturingArmy: 10 };
       }
       if (field.estate == "port") {
         if (/*board.human == party &&*/ (!board.subject || board.subject.estate != "town")) {
@@ -830,12 +832,12 @@ class Map {
             this.updateGameLog(`${board.hw_parties_names[party]} annexed port ${field.town_name}`, 'annex', board);
           }
         }
-        return [5, 5];
+        return { allUnitsWithinParty: 5, capturingArmy: 5 };
       }
       if (field.type == "land") {
-         return [1, 0];
+         return { allUnitsWithinParty: 1, capturingArmy: 0 };
       }
-      return [0, 0];
+      return { allUnitsWithinParty: 0, capturingArmy: 0 };
     };
     const moraleLost = (party, field) => {
       if (field.capital == party) {
@@ -899,12 +901,13 @@ class Map {
         if (!field.neighbours[n]) {
           continue;
         }
+        const isNeighbourShieldedByPact = board.hw_peace >= 0
+          && ((field.neighbours[n].party == board.hw_peace && party == board.human)
+          || (party == board.hw_peace && field.neighbours[n].party == board.human));
         if (field.neighbours[n].type == "land"
           && !field.neighbours[n].estate
           && !field.neighbours[n].army
-          && !(board.hw_peace >= 0
-            && ((field.neighbours[n].party == board.hw_peace && party == board.human)
-            || (party == board.hw_peace && field.neighbours[n].party == board.human)))
+          && !isNeighbourShieldedByPact
         ) {
             if (!startup && field.neighbours[n].party != party) {
                this.addMoraleForAA(moraleEarned(party,field.neighbours[n]), field.army, board);
@@ -950,7 +953,7 @@ class Map {
   }
 
   moveArmy(army, field, board) {
-    const afield = army.field;
+    const originField = army.field;
     this.updateGameLog(`${board.hw_parties_names[army.party]} moved unit from (${army.field.fx},${army.field.fy}) to (${field.fx},${field.fy})`, 'move', board);
 
     // Pact was just broken
@@ -976,9 +979,9 @@ class Map {
         this.joinUnits(army.count, army.morale, army.party, board, field.army);
       } else {
         // Only move enough units to fill other army up to the max
-        const chng = field.army.count + army.count - MAX_ARMY_SIZE;
+        const overflow = field.army.count + army.count - MAX_ARMY_SIZE;
         this.joinUnits(MAX_ARMY_SIZE - field.army.count, army.morale, army.party, board, field.army);
-        this.joinUnits(chng, army.morale, army.party, board, null, afield);
+        this.joinUnits(overflow, army.morale, army.party, board, null, originField);
       }
       this.setArmyRemoval(army, field.army);
       field.army.moved = true;
@@ -992,47 +995,47 @@ class Map {
     return true;
   }
 
-  attack(army1, field, board) {
-    const army2 = field.army;
-    if (!army2) {
+  attack(attacker, field, board) {
+    const defender = field.army;
+    if (!defender) {
       return true;
     }
-    const army1_pw = army1.count + army1.morale;
-    const army2_pw = army2.count + army2.morale;
-    if (army1_pw > army2_pw) {
-      this.addMoraleForAll(-Math.floor(army2.count / 10), army2.party, board);
-      army1.count = army1.count - Math.floor(army2_pw / army1_pw * army1.count);
-      army1.count = army1.count <= 0 ? 1 : army1.count;
-      army1.morale = army1.morale > army1.count ? army1.count : army1.morale;
-      this.setExplosion(army1, army2, army1);
+    const attackerPower = attacker.count + attacker.morale;
+    const defenderPower = defender.count + defender.morale;
+    if (attackerPower > defenderPower) {
+      this.addMoraleForAll(-Math.floor(defender.count / 10), defender.party, board);
+      attacker.count = attacker.count - Math.floor(defenderPower / attackerPower * attacker.count);
+      attacker.count = attacker.count <= 0 ? 1 : attacker.count;
+      attacker.morale = attacker.morale > attacker.count ? attacker.count : attacker.morale;
+      this.setExplosion(attacker, defender, attacker);
       return true;
     }
-    this.addMoraleForAll(-Math.floor(army1.count / 10), army1.party, board);
-    army2.count = army2.count - Math.floor(army1_pw / army2_pw * army1.count);
-    army2.count = army2.count <= 0 ? 1 : army2.count;
-    army2.morale = army2.morale > army2.count ? army2.count : army2.morale;
-    this.setExplosion(army1, army1, army2);
+    this.addMoraleForAll(-Math.floor(attacker.count / 10), attacker.party, board);
+    defender.count = defender.count - Math.floor(attackerPower / defenderPower * attacker.count);
+    defender.count = defender.count <= 0 ? 1 : defender.count;
+    defender.morale = defender.morale > defender.count ? defender.count : defender.morale;
+    this.setExplosion(attacker, attacker, defender);
     return false;
   }
 
-  setArmyRemoval(army, army_waiting) {
+  setArmyRemoval(army, waitingArmy) {
     army.remove = true;
     army.remove_time = 24;
-    if (army_waiting) {
-      army.waiting = army_waiting;
-      army_waiting.is_waiting = true;
+    if (waitingArmy) {
+      army.waiting = waitingArmy;
+      waitingArmy.is_waiting = true;
     }
   }
 
-  setExplosion(attacking, exploding, army_waiting) {
+  setExplosion(attacking, exploding, waitingArmy) {
     if (!exploding) {
       exploding = attacking;
     }
     attacking.exploding = exploding;
     exploding.remove_time = 36;
-    if (army_waiting) {
-      attacking.waiting = army_waiting;
-      army_waiting.is_waiting = true;
+    if (waitingArmy) {
+      attacking.waiting = waitingArmy;
+      waitingArmy.is_waiting = true;
     }
   }
 
@@ -1060,9 +1063,9 @@ class Map {
   }
 
   addMoraleForAA(morale, army, board) {
-    this.addMorale(morale[1], army);
-    if (morale[0] != 0) {
-      this.addMoraleForAll(morale[0], army.party, board);
+    this.addMorale(morale.capturingArmy, army);
+    if (morale.allUnitsWithinParty != 0) {
+      this.addMoraleForAll(morale.allUnitsWithinParty, army.party, board);
     }
   }
 

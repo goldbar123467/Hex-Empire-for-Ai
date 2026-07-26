@@ -87,10 +87,12 @@ class Bot {
       if (army.field.capital == party && !field.army && board.turns < 5) {
         totalProfitability = totalProfitability + 50;
       }
-      const neighbour = this.calcNeighboursInfo(party, field);
+      const neighboursPower = this.calcNeighboursPower(party, field);
       const enemyNeighbour = this.calcEnemyNeighboursPower(party, field);
       const fieldArmyTotal = field.army ? field.army.count + field.army.morale : 0;
-      if ((neighbour.power < enemyNeighbour && neighbour.power < 300 || (army.count + army.morale < fieldArmyTotal) && army.count < 90)
+      const isOutnumberedByNeighbours = neighboursPower < enemyNeighbour && neighboursPower < 300;
+      const isOverwhelmedByField = (army.count + army.morale < fieldArmyTotal) && army.count < 90;
+      if ((isOutnumberedByNeighbours || isOverwhelmedByField)
         && !field.n_capital[party]
         && !canTakeCapital) {
           if (board.hw_parties_wait_for_support_field[party] == field) {
@@ -106,7 +108,7 @@ class Bot {
       return totalProfitability;
     };
     const findBestMoveVal = (army) => {
-      const moves = this.pathfinder.getPossibleMoves(army.field, true, false);
+      const moves = this.pathfinder.getPossibleMoves(army.field, { excludeSelf: true, checkPower: false });
       for (let i = 0; i < moves.length; i++) {
         moves[i].wait_for_support = false;
         moves[i].tmp_prof = finalProfitability(moves[i], army);
@@ -130,34 +132,18 @@ class Bot {
     return movableArmies;
   }
 
-  calcNeighboursInfo(party, field) {
+  calcNeighboursPower(party, field) {
     let power = 0;
-    let count = 0;
-    let nonEnemyLand = 0;
-    let waitForSupport = false;
     const furtherNeighbours = this.pathfinder.getFurtherNeighbours(field);
     for (let i = 0; i < furtherNeighbours.length; i++) {
       if (!furtherNeighbours[i]) {
         continue;
       }
-
       if (furtherNeighbours[i].army && furtherNeighbours[i].army.party == party) {
         power = power + (furtherNeighbours[i].army.count + furtherNeighbours[i].army.morale);
-        count = count + 1;
-      }
-      if (furtherNeighbours[i].type == field.type && (furtherNeighbours[i].party == party || furtherNeighbours[i].party < 0)) {
-        nonEnemyLand = nonEnemyLand + 1;
-      }
-      if (furtherNeighbours[i].wait_for_support) {
-        waitForSupport = true;
       }
     }
-    return {
-      power: power,
-      count: count,
-      non_enemy_land: nonEnemyLand,
-      wait_for_support: waitForSupport,
-    };
+    return power;
   }
 
   calcEnemyNeighboursPower(party, field) {
@@ -176,7 +162,7 @@ class Bot {
 
   supportArmy(party, army, field, board) {
     const findBestMoveVal = (army) => {
-      const moves = this.pathfinder.getPossibleMoves(army.field, true, false);
+      const moves = this.pathfinder.getPossibleMoves(army.field, { excludeSelf: true, checkPower: false });
       const supportMoves = [];
 
       for (let i = 0; i < moves.length; i++) {

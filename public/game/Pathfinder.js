@@ -128,7 +128,7 @@ class Pathfinder {
     return field.neighbours.concat(additionalNeighbours);
   }
 
-  getPossibleMoves(field, no_self, check_power) {
+  getPossibleMoves(field, { excludeSelf = false, checkPower = false } = {}) {
     const joinCnd = (field1, field2) => {
       if (!field1) {
         return false;
@@ -139,7 +139,7 @@ class Pathfinder {
       if (!field1.army) {
         return true;
       }
-      if (check_power && field1.army && field2.army && field1.army.party != field2.army.party) {
+      if (checkPower && field1.army && field2.army && field1.army.party != field2.army.party) {
         const ap = field1.army.count + field1.army.morale;
         const bp = field2.army.count + field2.army.morale;
         if (bp < 0.75 * ap) {
@@ -148,7 +148,7 @@ class Pathfinder {
       }
       return field1.army.party != field2.army.party || field1.type != "water" && field1.army.count < MAX_ARMY_SIZE;
     };
-    const reachableFields = no_self ? [] : [field];
+    const reachableFields = excludeSelf ? [] : [field];
 
     if (field.estate == "port") {
       for (let n = 0; n < 6; n++) {
