@@ -176,6 +176,8 @@ class Map {
   }
 
   addTown(x, y, board) {
+    // Currently unused, but dropping the rand() call shifts the seeded map-generation sequence
+    const townBgDirtImg = `images/cd_${this.rand(6)}.png`;
     const townBgGrassImg = this.images[`townBgGrass${this.rand(6) + 1}`].img;
     const flipH = this.rand(2);
     const flipV = this.rand(2);
