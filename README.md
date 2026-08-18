@@ -60,3 +60,9 @@ npm install
 ```
 node server.js
 ```
+
+## Running Tests
+
+```
+npm test
+```
