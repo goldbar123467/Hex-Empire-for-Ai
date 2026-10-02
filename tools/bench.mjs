@@ -11,7 +11,9 @@ let rounds = 0;
 let moves = 0;
 const started = performance.now();
 for (let i = 0; i < count; i++) {
-  const result = playReference(i);
+  let result;
+  try { result = playReference(i); }
+  catch (cause) { throw new Error(`Unmodified upstream failed on map ${i}; benchmark incomplete`, { cause }); }
   rounds += result.rounds;
   moves += result.moves;
 }
