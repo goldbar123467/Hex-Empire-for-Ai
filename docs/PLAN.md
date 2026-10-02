@@ -19,7 +19,7 @@ Goal: a clean fork with tests, a throughput baseline, and golden fixtures record
   contradicts `LICENSE`). Add `.gitignore` entries: `data/`, `runs/`, `.venv/`, `__pycache__/`,
   `*.parquet`, `*.pt`, `node_modules/`. Add `CLAUDE.md` containing the single line `@AGENTS.md`.
   Copy `AGENTS.md` and these docs in. Create `docs/DECISIONS.md` and `docs/RESULTS.md` (empty templates).
-- [ ] **0.2 CI.** GitHub Actions workflow running `npm ci && npm test` on Node 22 for every PR.
+- [x] **0.2 CI.** GitHub Actions workflow running `npm ci && npm test` on Node 22 for every PR.
 - [ ] **0.3 Reference harness.** `tools/bench.mjs` runs full 4-bot games headless against the
   *original* `public/game/Map.js` using `test/helpers/domStub.mjs`, mirroring `Game.runTurn` exactly
   (see ENV_SPEC → Reference turn loop). Silence `console.warn` inside the harness. Prints games/s,
