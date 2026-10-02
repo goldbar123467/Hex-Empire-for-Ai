@@ -1,7 +1,8 @@
 {
-  "name": "HexEmpireAI",
+  "name": "hexempire-rl",
   "version": "1.0.0",
-  "description": "Hex Empire AI Battle",
+  "description": "Deterministic Hex Empire games and replayable decision datasets",
+  "engines": { "node": "22.x" },
   "main": "server.js",
   "dependencies": {
     "express": "^5.2.1"
@@ -12,12 +13,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/samuelyuan/HexEmpireAI.git"
+    "url": "git+https://github.com/goldbar123467/Hex-Empire-for-Ai.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/samuelyuan/HexEmpireAI/issues"
+    "url": "https://github.com/goldbar123467/Hex-Empire-for-Ai/issues"
   },
-  "homepage": "https://github.com/samuelyuan/HexEmpireAI#readme"
+  "homepage": "https://github.com/goldbar123467/Hex-Empire-for-Ai#readme"
 }
