@@ -41,7 +41,8 @@ Paths: `data/raw/human/<YYYY-MM-DD>/<game_id>.jsonl`, `data/raw/bot/<run>/shard-
  "n_legal": 23, "think_ms": 4210}
 ```
 
-- `state_hash` is the hash **before** the decision. `moves_left` likewise (bots: points left in their loop).
+- `state_hash` is the hash **before** the decision. `moves_left` likewise; it equals the snapshot's
+  `moves_left` (ENV_SPEC §5) for bots and external seats alike, so BC features match live play.
 - PASS: `"action": 3960, "from": null, "to": null`. A bot move point that moved nothing
   (`makeMove` found no move): `"action": null, "noop": true`.
 - `think_ms` only for human decisions (time since the decision became available).
