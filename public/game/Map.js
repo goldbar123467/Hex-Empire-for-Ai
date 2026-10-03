@@ -924,7 +924,7 @@ class Map {
     const rankedMoves = this.bot.calcArmiesProfitability(party, board);
     rankedMoves.sort(compareArmiesByProfitability);
 
-    if (rankedMoves.length === 0) {
+    if (rankedMoves.length === 0 || !rankedMoves[0].move) {
       console.warn('No possible moves for party ', board.hw_parties_names[party]);
       return;
     }

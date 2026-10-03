@@ -3,12 +3,14 @@ import { installDomStub, buildFakeImages } from './domStub.mjs';
 installDomStub();
 const { Map } = await import('../../public/game/Map.js');
 const { Game } = await import('../../public/game/Game.js');
+const { UpstreamMap, UpstreamGame } = await import('./upstream.mjs');
 
 export const UPSTREAM_COMMIT = '8272cde7fce46520cffc3c845ed3f83ff95ead0a';
 
-export function createReference(mapNumber) {
-  const board = Game.prototype.generateNewBoard();
-  const map = new Map(mapNumber, buildFakeImages());
+export function createReference(mapNumber, { legacy = false } = {}) {
+  const board = UpstreamGame.prototype.generateNewBoard();
+  const MapClass = legacy ? UpstreamMap : Map;
+  const map = new MapClass(mapNumber, buildFakeImages());
   map.generateMap(board);
   map.updateBoard(board);
   map.calcAIHelpers(board);
@@ -26,9 +28,9 @@ export function withoutWarnings(fn) {
 }
 
 // Mirrors the pinned Game.runTurn/runComputerTurn, with rendering omitted.
-export function playReference(mapNumber, { afterSetup, afterParty, maxRounds = 150 } = {}) {
+export function playReference(mapNumber, { afterSetup, afterParty, maxRounds = 150, legacy = false } = {}) {
   return withoutWarnings(() => {
-    const { map, board } = createReference(mapNumber);
+    const { map, board } = createReference(mapNumber, { legacy });
     afterSetup?.(board);
     let rounds = 0;
     let moves = 0;

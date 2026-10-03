@@ -106,6 +106,10 @@ or framework to the browser game.
 
 ## When to stop and ask the owner
 
+Owner clarification (2026-10-02): fixes necessary to complete this project are pre-approved,
+including the missing-destination bot guard. Implement and verify fixes without another permission
+gate; continue versioning behavior changes, preserving reference fixtures, and recording decisions.
+
 Stop, write the question under "Open questions" in `docs/DECISIONS.md`, and end your turn when:
 
 - a task needs a game-rule change, a dataset schema change after a Kaggle version was published,
