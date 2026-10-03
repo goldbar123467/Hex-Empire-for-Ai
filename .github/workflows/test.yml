@@ -2,7 +2,7 @@ name: Tests
 on:
   pull_request:
   push:
-    branches: ['phase*/**']
+    branches: ['main', 'phase*/**']
 permissions:
   contents: read
 jobs:
@@ -24,3 +24,14 @@ jobs:
           cmp test/fixtures/golden/v1.1.json /tmp/golden.json
           node tools/make-golden.mjs --legacy --out /tmp/original.json
           cmp test/fixtures/golden/v1.json /tmp/original.json
+      - name: Browser setup
+        run: |
+          if [ -z "${PLAYWRIGHT_BROWSERS_PATH:-}" ]; then
+            npx playwright install --with-deps chromium
+          fi
+      - run: npm run test:ui
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure
+          path: test-results/browser/

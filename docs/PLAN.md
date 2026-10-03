@@ -111,7 +111,7 @@ verified log.
 - [x] **2.4 Verifier.** `tools/verify-log.mjs <file|dir>` replays logs through the engine, checks
   every `state_hash`, the footer, and writes a summary (`ok`, `abandoned`, `failed: <reason>`).
   Failed files are moved to `data/raw/quarantine/` only when `--quarantine` is passed.
-- [ ] **2.5 Automated UI test.** Playwright test (headless Chromium) that starts a game, plays the
+- [x] **2.5 Automated UI test.** Playwright test (headless Chromium) that starts a game, plays the
   human seat by always clicking the first legal move until moves run out, ends turns, finishes a game
   (cap 150 rounds), and verifies the produced log. Chromium is preinstalled in some agent sandboxes;
   do not download browsers if `PLAYWRIGHT_BROWSERS_PATH` is set.
