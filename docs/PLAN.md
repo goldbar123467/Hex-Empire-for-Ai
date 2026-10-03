@@ -94,7 +94,7 @@ inside the same 10% limit. Both are slower than the earlier standalone measureme
 Goal: the owner can play as one empire against three bots in the browser, and every game produces a
 verified log.
 
-- [ ] **2.1 Setup panel.** Map number (or random), seat picker (0–3 with empire names/colors),
+- [x] **2.1 Setup panel.** Map number (or random), seat picker (0–3 with empire names/colors),
   pseudonym field (free text, stored in `localStorage`, default `p01`), bot speed (0–1000 ms per move).
   Starting a game sets controllers with the chosen seat `external` and `human_seat` = that seat.
 - [ ] **2.2 Click-to-move.** On the human's decision: highlight armies that can move; clicking one

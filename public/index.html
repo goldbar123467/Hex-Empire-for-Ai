@@ -1,117 +1,54 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-  <title>HexEmpireAI</title>
-  <!-- Required meta tags -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="/css/bootstrap.min.css" type="text/css">
-  <link rel="stylesheet" href="/css/game.css" type="text/css">
-  <script src="/js/jquery-3.5.1.min.js"></script>
-  <script src="/js/bootstrap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-</head>
-
-<body>
-  <div class="main-container">
-    <!-- Header & Controls -->
-    <div class="header">
-      <div class="form-group">
-        <label for="mapNumberInput">Map #</label>
-        <input type="text" class="form-control" id="mapNumberInput" placeholder="e.g., 999999">
-      </div>
-      <div class="btn-group-custom">
-        <button type="button" class="btn btn-primary" id="changeMapButton">Change</button>
-        <button type="button" class="btn btn-primary" id="randomMapButton">Random</button>
-        <button type="button" class="btn btn-success" id="startBattleButton">Start</button>
-      </div>
-    </div>
-
-    <!-- Map Container -->
-    <div class="map-container">
-      <div class="status-bar">
-        <div class="status-item">
-          <span class="status-label">Map:</span>
-          <span class="status-value" id="mapNumberStatus">-</span>
-        </div>
-        <div class="status-item">
-          <span class="status-label">Turn:</span>
-          <span class="status-value" id="turnStatus">1</span>
-        </div>
-      </div>
-      <!-- Hidden element for backward compatibility -->
-      <div id="mapStatus" style="display: none;"><b>Map</b> , <b>Turn</b> 1</div>
-      <canvas id="map" width="800" height="500"></canvas>
-
-      <!-- Replay Controls (shown after game ends) -->
-      <div class="replay-controls-inline" id="replayControlsInline" style="display: none;">
-        <div class="replay-controls">
-          <button class="btn btn-sm btn-secondary" id="replayPrevBtn">⏮ Prev</button>
-          <button class="btn btn-sm btn-primary" id="replayPlayBtn">▶ Play</button>
-          <button class="btn btn-sm btn-secondary" id="replayNextBtn">Next ⏭</button>
-          <button class="btn btn-sm btn-outline-secondary" id="replayExitBtn" style="display: none;">Exit
-            Replay</button>
-          <span class="replay-turn-display" id="replayTurnDisplay">0 / 0</span>
-          <input type="range" class="replay-slider" id="replaySlider" min="0" max="0" value="0">
-        </div>
-      </div>
-    </div>
-
-    <!-- Combined Tabs for Game Log and Statistics -->
-    <div class="info-panel-container">
-      <div class="info-panel-tabs">
-        <button class="info-panel-tab active" data-panel="log">
-          <span>Game Log</span>
-          <span class="badge" id="logBadge">0</span>
-        </button>
-        <button class="info-panel-tab" data-panel="stats">
-          <span>Statistics</span>
-        </button>
-      </div>
-
-      <!-- Game Log Panel -->
-      <div id="infoPanelLog" class="info-panel-content active">
-        <div class="log-filters">
-          <input type="text" class="log-search" id="logSearch" placeholder="Search log...">
-          <button class="log-filter-btn active" data-filter="all">All</button>
-          <button class="log-filter-btn" data-filter="conquest">Conquest</button>
-          <button class="log-filter-btn" data-filter="capture">Capture</button>
-          <button class="log-filter-btn" data-filter="move">Moves</button>
-          <button class="log-filter-btn" data-filter="annex">Annex</button>
-        </div>
-        <div id="gamelog"></div>
-      </div>
-
-      <!-- Statistics Panel -->
-      <div id="infoPanelStats" class="info-panel-content">
-        <div class="stats-content">
-          <div class="stats-tabs">
-            <button class="stats-tab active" data-tab="cities">Cities & Ports</button>
-            <button class="stats-tab" data-tab="army">Army Size</button>
-            <button class="stats-tab" data-tab="territory">Territory</button>
-            <button class="stats-tab" data-tab="morale">Morale</button>
-          </div>
-          <div id="statsChartCities" class="stats-chart-container">
-            <canvas id="citiesChart"></canvas>
-          </div>
-          <div id="statsChartArmy" class="stats-chart-container" style="display: none;">
-            <canvas id="armyChart"></canvas>
-          </div>
-          <div id="statsChartTerritory" class="stats-chart-container" style="display: none;">
-            <canvas id="territoryChart"></canvas>
-          </div>
-          <div id="statsChartMorale" class="stats-chart-container" style="display: none;">
-            <canvas id="moraleChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#172321"><title>Hex Empire · Command your empire</title>
+  <link rel="stylesheet" href="/css/game.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='%23cbb079' d='M20 2 37 11v18L20 38 3 29V11z'/%3E%3Cpath fill='%23172321' d='M12 11h4v7h8v-7h4v18h-4v-7h-8v7h-4z'/%3E%3C/svg%3E">
   <script src="/game/Main.js" type="module"></script>
-</body>
-
-</html>
+</head>
+<body>
+<header class="masthead"><a class="brand" href="/" aria-label="Hex Empire home"><span class="crest">H</span><span>HEX EMPIRE<small>A GAME OF TERRITORY &amp; TACTICS</small></span></a><span class="local-mark"><i></i> Local play</span></header>
+<main class="layout">
+<aside class="command-panel">
+  <section id="setupPanel">
+    <p class="eyebrow">YOUR NEXT CAMPAIGN</p><h1>Choose your empire.</h1><p class="muted intro">Four empires. One map.<br>Take the other three capitals to win.</p>
+    <form id="setupForm">
+      <label for="mapNumberInput">Map number <span class="optional">blank = random</span></label>
+      <div class="input-row"><input id="mapNumberInput" inputmode="numeric" type="number" min="0" max="2147483647" step="1" placeholder="Random map" value="1234"><button id="randomMapButton" type="button" class="icon-button" title="Choose a random map" aria-label="Choose a random map">↻</button></div>
+      <fieldset class="seat-picker"><legend>Your empire</legend>
+        <label class="seat red"><input name="seat" type="radio" value="0" checked><span class="seat-dot"></span><span>Redosia<small>Northwest</small></span></label>
+        <label class="seat violet"><input name="seat" type="radio" value="1"><span class="seat-dot"></span><span>Violetnam<small>Southwest</small></span></label>
+        <label class="seat blue"><input name="seat" type="radio" value="2"><span class="seat-dot"></span><span>Bluegaria<small>Northeast</small></span></label>
+        <label class="seat green"><input name="seat" type="radio" value="3"><span class="seat-dot"></span><span>Greenland<small>Southeast</small></span></label>
+      </fieldset>
+      <label for="playerId">Player name <span class="optional">pseudonym</span></label><input id="playerId" value="p01" maxlength="32" required pattern="[A-Za-z0-9_-]{1,32}" autocomplete="off" spellcheck="false" aria-describedby="playerHint"><small id="playerHint" class="field-hint">Letters, numbers, _ or -. No personal details.</small>
+      <label for="botSpeed" class="speed-label">Bot delay <output id="speedValue">150 ms</output></label><input id="botSpeed" type="range" min="0" max="1000" step="50" value="150">
+      <button id="startBattleButton" class="primary" type="submit" disabled>Start campaign <span>→</span></button>
+      <button id="watchButton" class="text-button" type="button" disabled>Watch four bots play</button>
+    </form>
+  </section>
+  <section id="activePanel" hidden>
+    <p class="eyebrow" id="campaignLabel">YOUR CAMPAIGN</p><h1 id="empireTitle">Redosia</h1>
+    <div class="turn-card"><span class="turn-indicator" id="turnDot"></span><div><strong id="turnHeading">Your turn</strong><p id="turnDetail">Select an army to move.</p></div></div>
+    <div class="move-budget"><span>Moves remaining</span><strong id="movesLeft">0</strong></div>
+    <button id="endTurnButton" class="primary" disabled>End turn <kbd>E</kbd></button>
+    <div class="selection-info" aria-live="polite"><span class="eyebrow">ON THE MAP</span><strong id="selectionTitle">Choose an army</strong><p id="selectionDetail">Bright rings mark armies that can move.</p></div>
+    <div id="resultPanel" hidden><h2 id="resultHeading"></h2><p id="resultDetail"></p></div>
+    <button id="downloadButton" class="secondary" type="button" hidden>Download game log ↓</button>
+    <button id="newGameButton" class="text-button" type="button">New campaign</button>
+  </section>
+  <details class="field-guide"><summary>How to play</summary><p>Select one of your available armies, then a highlighted destination. Armies move up to two hexes; terrain and occupied hexes limit movement.</p><p>Army labels show <b>troops / morale</b>. Combine forces, capture towns for reinforcements, and protect your capital. End your turn with <kbd>E</kbd>. There is no undo.</p></details>
+  <p id="appError" class="error-message" role="alert" hidden></p>
+</aside>
+<section class="battlefield" aria-label="Campaign map">
+  <div class="map-toolbar"><div><span class="eyebrow">CAMPAIGN MAP</span><strong id="mapNumberStatus">1234</strong></div><div class="round-status"><span id="turnStatus">Ready to begin</span><label class="label-toggle"><input id="showNames" type="checkbox"> Town names</label></div></div>
+  <div class="map-scroll"><canvas id="map" width="800" height="500" tabindex="0" aria-label="Hex Empire battlefield. Click an available army, then a highlighted destination."></canvas></div>
+  <div class="map-caption"><span id="mapHint">Choose a seat and start your campaign.</span><span id="saveStatus" role="status">Local session</span></div>
+  <div class="empire-strip" id="empireStats" aria-label="Empire standings"></div>
+  <div id="replayBar" class="replay-bar" hidden><label for="replaySlider">Review game</label><input id="replaySlider" type="range" min="0" max="0" value="0"><output id="replayLabel">Round 0</output><button id="replayExit" class="text-button">Final board</button></div>
+  <details class="dispatches"><summary>Campaign dispatches <span id="logBadge">0</span></summary><ol id="gamelog"></ol></details>
+</section>
+</main>
+<footer class="credits">Built on Samuel Yuan’s HexEmpireAI · MIT <span>Human decisions. Reproducible games.</span></footer>
+</body></html>
