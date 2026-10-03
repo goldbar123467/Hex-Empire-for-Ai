@@ -17,10 +17,37 @@ function forEachField(board, callback) {
 }
 
 class MapRender {
+  prepareBackground(board, images) {
+    this.background = document.createElement('canvas');
+    this.background.width = 800; this.background.height = 600;
+    this.sea = document.createElement('canvas');
+    this.sea.width = 800; this.sea.height = 600;
+    const grass = this.background.getContext('2d'), sea = this.sea.getContext('2d');
+    const draw = (ctx,img,x,y,h,v,angle) => {
+      ctx.save();ctx.translate(x,y);ctx.translate(img.width/2,img.height/2);
+      ctx.rotate(angle*Math.PI/180);ctx.translate(-img.width/2,-img.height/2);
+      ctx.translate(h?img.width:0,v?img.height:0);ctx.scale(h?-1:1,v?-1:1);
+      ctx.drawImage(img,0,0);ctx.restore();
+    };
+    const clip = width => { grass.beginPath();grass.rect(0,0,width,465);grass.clip(); };
+    for(const [x,y,,variant,h,v,angle] of board.backgroundTiles) {
+      draw(grass,images[`grassBg${variant}`].img,x*125-15,y*125-15,h,v,angle);clip(800);
+    }
+    forEachField(board,field=>{
+      if(field.townVisual) {
+        const [,variant,h,v,angle]=field.townVisual, img=images[`townBgGrass${variant}`].img;
+        draw(grass,img,field._x-img.width/2,field._y-img.height/2,h,v,angle);clip(750);
+      }
+      if(field.seaVisual) {
+        const [variant,angle,h,v]=field.seaVisual, img=images[`seaBg${variant}`].img;
+        draw(sea,img,field._x-img.width/2,field._y-img.height/2,h,v,angle);
+      }
+    });
+  }
   drawInitialBackground(board) {
     const canvas = document.getElementById('map');
     if (!canvas) return;
-    canvas.getContext('2d').drawImage(board.background_2, 0, 0);
+    canvas.getContext('2d').drawImage(this.background, 0, 0);
   }
 
   drawMap(board, images) {
@@ -34,8 +61,8 @@ class MapRender {
     ctx.save();
     ctx.translate(offsetX, offsetY);
 
-    ctx.drawImage(board.background_2, 0, 0);
-    ctx.drawImage(board.background_sea, 0, 0);
+    ctx.drawImage(this.background, 0, 0);
+    ctx.drawImage(this.sea, 0, 0);
 
     forEachField(board, (field) => {
       const { _x: xCenter, _y: yCenter } = field;
