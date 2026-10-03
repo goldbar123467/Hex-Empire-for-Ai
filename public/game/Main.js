@@ -56,6 +56,7 @@ async function start(watch=false){
     await game.start({mapNumber:mapNumber(),controllers,humanSeat:seat});
     $('setupPanel').hidden=true;$('activePanel').hidden=false;
     $('empireTitle').textContent=seat<0?'A battle of empires.':names[seat];$('campaignLabel').textContent=seat<0?'SPECTATOR MODE':'YOUR CAMPAIGN';
+    if(seat>=0){const scroll=document.querySelector('.map-scroll');scroll.scrollLeft=seat>=2?scroll.scrollWidth:0;}
     game.queueBot();
   }catch(error){active=false;showError(error);$('startBattleButton').disabled=false;$('watchButton').disabled=false;}
 }
@@ -68,6 +69,24 @@ $('randomMapButton').addEventListener('click',async()=>{
 $('mapNumberInput').addEventListener('change',async()=>{if($('mapNumberInput').checkValidity())try{await game.start({mapNumber:mapNumber()},{preview:true});}catch(error){showError(error);}});
 $('botSpeed').addEventListener('input',()=>{game.botSpeed=Number($('botSpeed').value);$('speedValue').textContent=`${game.botSpeed} ms`;});
 $('showNames').addEventListener('change',()=>{game.mapRender.showTownNames=$('showNames').checked;game.render();});
+function endTurn(){if(active && game.engine.status().needsDecision)try{game.playAction(PASS);}catch(error){showError(error);}}
+$('endTurnButton').addEventListener('click',endTurn);
+document.addEventListener('keydown',event=>{
+  if(event.repeat || event.ctrlKey || event.altKey || event.metaKey || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName))return;
+  if(event.key.toLowerCase()==='e'){event.preventDefault();endTurn();}
+  if(event.key==='Escape'){game.selected=null;game.render();update();}
+});
+$('map').addEventListener('click',event=>{
+  if(!active || !game.engine.status().needsDecision)return;
+  const field=game.mapRender.fieldAt(game.board,event);if(!field)return;
+  const key=`${field.fx},${field.fy}`,legal=game.engine.legalMoves();
+  const chosen=legal.find(m=>m.from.join(',')===game.selected && m.to.join(',')===key);
+  if(chosen){try{game.playAction(chosen.action);}catch(error){showError(error);}return;}
+  if(!legal.some(m=>m.from.join(',')===key))return;
+  game.selected=key;game.render();
+  $('selectionTitle').textContent=field.town_name||`Army at ${field.fx}, ${field.fy}`;
+  $('selectionDetail').textContent=`${field.army.count} troops · ${field.army.morale} morale. Choose a highlighted destination; select another army to change selection.`;
+});
 $('newGameButton').addEventListener('click',async()=>{
   if(!game.engine.terminal && !confirm('Leave this campaign and set up a new one?'))return;
   game.stop();active=false;$('activePanel').hidden=true;$('setupPanel').hidden=false;$('replayBar').hidden=true;
