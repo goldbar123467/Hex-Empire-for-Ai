@@ -17,6 +17,35 @@ function forEachField(board, callback) {
 }
 
 class MapRender {
+  fieldAt(board, event) {
+    const canvas=document.getElementById('map'), rect=canvas.getBoundingClientRect();
+    const x=(event.clientX-rect.left)*canvas.width/rect.width-(board.renderOffset?.x||0);
+    const y=(event.clientY-rect.top)*canvas.height/rect.height-(board.renderOffset?.y||0);
+    return Object.values(board.field).find(f=>{
+      const dx=Math.abs(x-f._x),dy=Math.abs(y-f._y);
+      return dy<=20 && dx+0.625*dy<=25;
+    });
+  }
+
+  drawLegalMoves(board,moves,selected) {
+    const ctx=document.getElementById('map').getContext('2d');
+    const key=xy=>xy.join(',');
+    const origins=new Map(moves.map(move=>[key(move.from),move.from]));
+    ctx.save();ctx.translate(board.renderOffset?.x||0,board.renderOffset?.y||0);
+    for(const [id,from] of origins){
+      const f=board.field[`f${from[0]}x${from[1]}`];
+      ctx.beginPath();ctx.arc(f._x,f._y,22,0,Math.PI*2);ctx.lineWidth=selected===id?3:2;ctx.strokeStyle=selected===id?'#ffe3a3':'#fff5d6';ctx.shadowColor='#13261a';ctx.shadowBlur=4;ctx.stroke();
+    }
+    ctx.shadowBlur=0;
+    for(const move of moves.filter(m=>key(m.from)===selected)){
+      const f=board.field[`f${move.to[0]}x${move.to[1]}`],vertices=this.getHexVertices(f._x,f._y,23);
+      ctx.beginPath();vertices.forEach((v,i)=>i?ctx.lineTo(v.x,v.y):ctx.moveTo(v.x,v.y));ctx.closePath();
+      ctx.fillStyle='rgba(255,218,133,0.23)';ctx.fill();ctx.strokeStyle='#ffe3a3';ctx.lineWidth=2;ctx.stroke();
+      if(!f.army){ctx.beginPath();ctx.arc(f._x,f._y,4,0,Math.PI*2);ctx.fillStyle='#ffe3a3';ctx.fill();}
+    }
+    ctx.restore();
+  }
+
   prepareBackground(board, images) {
     this.background = document.createElement('canvas');
     this.background.width = 800; this.background.height = 600;
@@ -72,7 +101,7 @@ class MapRender {
     });
 
     this.drawTerritoryBorders(ctx, board);
-    this.drawTownNames(ctx, board);
+    if(this.showTownNames !== false) this.drawTownNames(ctx, board);
     ctx.restore();
   }
 
