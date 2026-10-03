@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createReference, playReference, withoutWarnings } from './helpers/reference.mjs';
 import { snapshot, stateHash } from './helpers/snapshot.mjs';
-import { Game } from '../public/game/Game.js';
+import { UpstreamGame as Game } from './helpers/upstream.mjs';
 
 test('reference harness matches the actual upstream Game turn methods', () => {
   withoutWarnings(() => {
