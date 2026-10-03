@@ -13,7 +13,7 @@ are planned but **not ready yet**. See [the phase checklist](docs/PLAN.md).
 Use Node 22 and npm 10. The implementation is currently on the Phase 0 branch:
 
 ```sh
-git clone -b phase0/golden https://github.com/goldbar123467/Hex-Empire-for-Ai.git
+git clone -b phase0/no-destination-guard https://github.com/goldbar123467/Hex-Empire-for-Ai.git
 cd Hex-Empire-for-Ai
 npm ci
 npm test
@@ -32,9 +32,10 @@ node tools/bench.mjs --games 200
 
 `test/fixtures/golden/v1.json` records setup and every party-turn hash for 100
 maps. The harness also has a test against the actual upstream `Game` turn methods.
-The 200-map benchmark currently exposes an upstream crash on map 107. This is
-an unresolved Phase 0 gate, not a successful performance result. See
-[decisions](docs/DECISIONS.md) for the proposed minimal fix.
+Rules v1.1 adds an owner-approved no-op guard for an upstream crash on map 107.
+All original hashes are preserved; the guarded 200-map benchmark completes.
+Use `--legacy` for the unmodified reference, including its original failure.
+See [measured results](docs/RESULTS.md).
 
 ## Data and credentials
 

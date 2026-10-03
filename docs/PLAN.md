@@ -20,7 +20,7 @@ Goal: a clean fork with tests, a throughput baseline, and golden fixtures record
   `*.parquet`, `*.pt`, `node_modules/`. Add `CLAUDE.md` containing the single line `@AGENTS.md`.
   Copy `AGENTS.md` and `docs/` (including the starter `DECISIONS.md` and `RESULTS.md`) in.
 - [x] **0.2 CI.** GitHub Actions workflow running `npm ci && npm test` on Node 22 for every PR.
-- [ ] **0.3 Reference harness.** `tools/bench.mjs` runs full 4-bot games headless against the
+- [x] **0.3 Reference harness.** `tools/bench.mjs` runs full 4-bot games headless against the
   *original* `public/game/Map.js` using `test/helpers/domStub.mjs`, mirroring `Game.runTurn` exactly
   (see ENV_SPEC → Reference turn loop). Silence `console.warn` inside the harness. Prints games/s,
   ms per game, mean rounds, bot moves per game. Record numbers in `docs/RESULTS.md` under "Engine throughput".
@@ -39,6 +39,8 @@ Acceptance
 - Bench numbers recorded with machine description (CPU model, cores, Node version).
 
 ---
+
+Phase 0 completed on 2026-10-02: original v1 fixtures remain unchanged; the owner-approved v1.1 guard also passes the 200-map benchmark (see RESULTS). The independent legacy mode retains the original crash.
 
 ## Phase 1 — Headless engine (single copy of the rules)
 
