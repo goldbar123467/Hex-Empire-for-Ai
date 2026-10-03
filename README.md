@@ -1,68 +1,50 @@
-# HexEmpireAI
+# Hex Empire for AI
 
-A strategic hex-based conquest game inspired by the flash game Hex Empire, where artificial intelligence players battle for world domination. Watch as AI-controlled armies compete to capture territories, cities, and ports in an automated turn-based strategy game.
+A deterministic Hex Empire research project based on Samuel Yuan's
+[HexEmpireAI](https://github.com/samuelyuan/HexEmpireAI), pinned to
+`8272cde7fce46520cffc3c845ed3f83ff95ead0a`.
 
-<img src="screenshots/map.png" alt="Game Map" width="425" height="300" />
+The current implementation runs the original four-bot browser game and a Node
+reference harness. Human controls, decision recording, datasets, and training
+are planned but **not ready yet**. See [the phase checklist](docs/PLAN.md).
 
-## Features
+## Run locally
 
-- Turn-by-Turn Replay System: Rewatch the entire game with playback controls to see how territories changed hands
-- Statistics Graphs: Track game metrics over time with interactive charts showing:
-  - Cities & Ports held by each player
-  - Army sizes
-  - Territory control
-  - Morale levels
-- Organized Game Log: Browse game events by turn with collapsible sections, filtering by event type (Conquest, Capture, Moves, Annex), and search functionality
-- Modern UI: Clean, compact interface optimized for viewing and screenshots
-- Map Generation: Generate random maps or load specific maps by number
+Use Node 22 and npm 10. The implementation is currently on the Phase 0 branch:
 
-## Game Rules
-
-### Setup
-
-- 4 AI-controlled players start in each corner of the map
-- Each player begins with a single army at their capital
-- Players: Redosia (red), Violetnam (violet), Bluegaria (blue), Greenland (green)
-
-### Gameplay
-
-- Turn Order: Counterclockwise starting from Redosia (red player)
-- Army Movement: Each player can move up to 5 armies per turn
-- Army Representation: Displayed as `armySize/morale`
-  - Morale increases when gaining territory
-  - Morale decreases when losing territory
-
-### Victory Condition
-
-- Capture enemy capitals to eliminate opponents
-- Last player standing wins
-
-### Map Features
-
-- Cities: 
-  - Increase morale when captured
-  - Provide reinforcements at the end of each turn to increase army size
-- Ports: 
-  - Increase morale when captured
-  - Allow armies to pass through to sea routes
-
-## Getting Started
-
-1. Clone the project
-
-2. Install npm dependencies
-```
-cd HexEmpireAI
-npm install
-```
-
-3. Run nodejs
-```
+```sh
+git clone -b phase0/golden https://github.com/goldbar123467/Hex-Empire-for-Ai.git
+cd Hex-Empire-for-Ai
+npm ci
+npm test
 node server.js
 ```
 
-## Running Tests
+Open `http://localhost:3000` to watch the original bot game. The recording UI
+will replace this workflow when Phase 2 passes its automated checks.
 
+## Reference verification
+
+```sh
+node tools/make-golden.mjs --out /tmp/golden.json
+node tools/bench.mjs --games 200
 ```
-npm test
-```
+
+`test/fixtures/golden/v1.json` records setup and every party-turn hash for 100
+maps. The harness also has a test against the actual upstream `Game` turn methods.
+The 200-map benchmark currently exposes an upstream crash on map 107. This is
+an unresolved Phase 0 gate, not a successful performance result. See
+[decisions](docs/DECISIONS.md) for the proposed minimal fix.
+
+## Data and credentials
+
+Human games will be recorded on the owner's PC. Source control excludes
+`data/`, `runs/`, model files, virtual environments, and credentials. Never put
+tokens in tracked configuration. The rented Vast server has no persistent
+volume; source and irreplaceable outputs must also exist off that instance.
+
+## Credits and license
+
+Game implementation: Samuel Yuan, HexEmpireAI, MIT. Original game: Hex Empire.
+Project additions: Clark Kitchen, MIT. The upstream copyright notice is
+preserved in [LICENSE](LICENSE).

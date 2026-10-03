@@ -27,7 +27,7 @@ Goal: a clean fork with tests, a throughput baseline, and golden fixtures record
 - [x] **0.4 Canonical snapshot + hash (harness-side).** Implement `snapshot(board)` and
   `stateHash(snapshot)` exactly as specified in ENV_SPEC → Canonical snapshot, as standalone functions
   that read the upstream `board` object.
-- [ ] **0.5 Golden fixtures.** `tools/make-golden.mjs` plays 100 bot games with the original code
+- [x] **0.5 Golden fixtures.** `tools/make-golden.mjs` plays 100 bot games with the original code
   (map numbers listed in `test/fixtures/golden/maps.json`: 0–49 and 50 numbers spread across
   1–233279) and writes, per game: map number, the state hash after map setup, after every party turn,
   and the final summary (rounds, winner). Commit as `test/fixtures/golden/v1.json` (aim < 1 MB).

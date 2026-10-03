@@ -16,3 +16,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Reference fixture reproducibility
+        run: |
+          node tools/make-golden.mjs --out /tmp/golden.json
+          cmp test/fixtures/golden/v1.json /tmp/golden.json

@@ -65,6 +65,7 @@ three other original capitals and their owners have no armies (`checkPartyState`
 | Q7 | Upstream `Game.runComputerTurn` returns early for non-computer seats **without** `unitsSpawn`; human play was never implemented. | Engine deliberately spawns for external seats too. Goldens are unaffected (all-bot). Record in DECISIONS.md. |
 | Q8 | Pact/peace code (`hw_peace`, `hw_pact_signed`) is never activated (`hw_peace` is never set ≥ 0). | Dead code; keep, do not expose. |
 | Q9 | Seat advantage: in 40 bot-only games seat 0 won 18, seat 1 won 5, seat 2 won 10, seat 3 won 7. | Always rotate seats in evaluation and report per seat. |
+| Q10 | The original bot can rank an army with no destination first, then dereference `bestMove.move.wait_for_support`. Confirmed on map 107, zero-based round 9, seat 0, using the original Game turn methods. | Phase 0's 200-game benchmark fails; a versioned guard awaits owner approval. Do not silently discard the map. |
 
 ## 3. Map generation
 
