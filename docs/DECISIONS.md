@@ -14,6 +14,8 @@
 
 - 2026-10-02: Owner explicitly pre-approved fixes needed to complete the project. Apply the minimal no-destination guard as `v1.1-upstream-8272cde-noop`: a first-ranked army without a destination consumes a bot move point without moving. Keep defined stale moves unchanged. Retain immutable v1 goldens and load the original oracle from pinned Git history; add guarded fixtures including map 107. This approval supersedes the previous guard question and removes repeated approval gates for necessary fixes. (owner)
 
+- 2026-10-02: Preserve Q5 bot memory, dying-army references and stale party-list order in an opt-in v2 continuation snapshot. Keep v1 observations and golden hashes unchanged; reject v1-only restoration instead of silently reconstructing incomplete state. JSON round-trip restoration matches all remaining party hashes in 50 seeded golden games and a mixed external/bot game. This implements the specified Q5 extension under the owner's prior fix approval. (agent)
+
 ## Open questions
 
 - Hugging Face username and final private-checkpoint/public-model repository names, needed before training or release.

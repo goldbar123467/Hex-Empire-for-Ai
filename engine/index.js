@@ -1,4 +1,4 @@
-export { Game, createGame } from './game.js';
+export { Game, createGame, fromSnapshot } from './game.js';
 export { Rules } from './rules.js';
 export { snapshot, stateHash } from './snapshot.js';
 export { RULES_VERSION } from './version.js';

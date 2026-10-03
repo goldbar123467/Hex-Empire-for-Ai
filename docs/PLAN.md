@@ -60,7 +60,7 @@ game and Node tools use it. Behavior is identical to upstream (golden test).
   offsets, and `encodeAction/decodeAction`. `tools/export-hexgrid.mjs` writes `engine/hexgrid.json`
   (consumed by Python). Tests: round trip for every cell and offset; every upstream neighbour equals an
   axial direction; every legal destination is within axial distance 2.
-- [ ] **1.4 Snapshot restore.** `engine.fromSnapshot(mapNumber, snapshot)`. Test: for 50 golden games,
+- [x] **1.4 Snapshot restore.** `engine.fromSnapshot(mapNumber, snapshot)`. Test: for 50 golden games,
   snapshot at a random party turn, restore into a fresh game, play out with bots, final hash equals golden.
 - [ ] **1.5 Browser uses engine.** `server.js` serves `engine/` at `/engine`. `public/game/*` imports
   rules from `/engine/index.js`; `MapRender`, `Replay`, `Statistics`, `UI` keep rendering only.
