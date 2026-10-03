@@ -56,7 +56,7 @@ game and Node tools use it. Behavior is identical to upstream (golden test).
 - [ ] **1.2 Game API.** Implement `createGame()` and the methods in ENV_SPEC → Engine API, including
   the turn flow, external controllers, `human_seat`, legal moves (de-duplicated, sorted), action ids,
   turn limit, and terminal logic.
-- [ ] **1.3 Hex grid + action ids.** `engine/hexgrid.js` implements cell index, odd-q ↔ axial, the 18
+- [x] **1.3 Hex grid + action ids.** `engine/hexgrid.js` implements cell index, odd-q ↔ axial, the 18
   offsets, and `encodeAction/decodeAction`. `tools/export-hexgrid.mjs` writes `engine/hexgrid.json`
   (consumed by Python). Tests: round trip for every cell and offset; every upstream neighbour equals an
   axial direction; every legal destination is within axial distance 2.
