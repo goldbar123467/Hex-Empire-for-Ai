@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -19,4 +21,6 @@ jobs:
       - name: Reference fixture reproducibility
         run: |
           node tools/make-golden.mjs --out /tmp/golden.json
-          cmp test/fixtures/golden/v1.json /tmp/golden.json
+          cmp test/fixtures/golden/v1.1.json /tmp/golden.json
+          node tools/make-golden.mjs --legacy --out /tmp/original.json
+          cmp test/fixtures/golden/v1.json /tmp/original.json
