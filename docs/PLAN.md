@@ -108,7 +108,7 @@ verified log.
   `data/raw/human/<YYYY-MM-DD>/<game_id>.jsonl` (atomic write: temp file + rename). Add a
   "Download log" button as fallback. Closing the tab mid-game leaves a log without footer; the
   verifier marks it `abandoned`.
-- [ ] **2.4 Verifier.** `tools/verify-log.mjs <file|dir>` replays logs through the engine, checks
+- [x] **2.4 Verifier.** `tools/verify-log.mjs <file|dir>` replays logs through the engine, checks
   every `state_hash`, the footer, and writes a summary (`ok`, `abandoned`, `failed: <reason>`).
   Failed files are moved to `data/raw/quarantine/` only when `--quarantine` is passed.
 - [ ] **2.5 Automated UI test.** Playwright test (headless Chromium) that starts a game, plays the
