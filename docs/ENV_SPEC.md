@@ -127,6 +127,16 @@ browsers). Test vectors: `""` → `cbf29ce484222325`, `"a"` → `af63dc4c8601ec8
 `terrain[220]` (0 water, 1 land), `estate[220]` (0 none, 1 town, 2 port), `capital[220]` (−1 or seat),
 `town_name[220]` (string or null), `dist_to_capital[4][220]` (= −`field.profitability[p]`).
 
+**Continuation snapshots (v2).** `snapshot({continuation:true})` returns
+`{v:2, map_number, rules_version, observation:<v1>, continuation:<graph>}`. The graph preserves the
+complete board, field/army aliases, stale bot targets and scores (Q5), dying armies, cached party-list
+order, RNG and turn cursor. Ordered node entries preserve JavaScript insertion order; explicit tags
+preserve undefined/non-finite values and negative zero through JSON. Render canvases and callbacks
+are excluded. `fromSnapshot` requires this payload, validates its map/rules version and observation,
+then advances to the next pending decision or terminal state. V1 is the compact observation used by
+logs, features and golden hashes; it is not a complete continuation state. Delivery options and
+callbacks may change on restore; rules, seats and controllers remain those of the saved game.
+
 ## 6. Engine API (`engine/index.js`)
 
 ```js
@@ -145,6 +155,7 @@ game.legalMoves();    // [{ from: [x, y], to: [x, y], action }] (same set, PASS 
 game.applyAction(id); // external move or PASS; throws on illegal or when no decision is pending
 game.applyBotMove();  // let the built-in bot make the pending external decision (Bot.makeMove semantics)
 game.snapshot();  game.hash();  game.mapInfo();  game.drainEvents();
+const saved = game.snapshot({continuation:true}); // JSON-safe full state, including hidden bot memory
 fromSnapshot(mapNumber, snapshot, options);         // restore (PLAN 1.4)
 ```
 

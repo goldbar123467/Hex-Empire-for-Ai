@@ -2,6 +2,8 @@ import { Rules } from './rules.js';
 import { createBoard } from './board.js';
 import { snapshot, stateHash } from './snapshot.js';
 import { PASS, cells, encodeAction, decodeAction } from './hexgrid.js';
+import { packGraph, unpackGraph } from './continuation.js';
+import { RULES_VERSION } from './version.js';
 
 export class Game {
   constructor(options = {}) {
@@ -169,7 +171,14 @@ export class Game {
     }
   }
 
-  snapshot() { return snapshot(this.board, this.movesLeft); }
+  snapshot({ continuation = false } = {}) {
+    const observation = snapshot(this.board, this.movesLeft);
+    if (!continuation) return observation;
+    return { v: 2, map_number: this.options.mapNumber, rules_version: RULES_VERSION, observation,
+      continuation: packGraph({board:this.board,options:this.options,movesLeft:this.movesLeft,nextParty:this.nextParty,
+        completedRounds:this.completedRounds,phase:this.phase,terminal:this.terminal,winner:this.winner,
+        endedBy:this.endedBy,decisions:this.decisions,rng:this.map.rnd_seed,towns:this.map.towns,captureEvents:this.map.captureEvents}) };
+  }
   hash() { return stateHash(this.snapshot()); }
   drainEvents() { const events = [...this.events, ...this.map.events]; this.events.length = 0; this.map.events.length = 0; return events; }
   mapInfo() {
@@ -187,3 +196,21 @@ export class Game {
 }
 
 export const createGame = options => new Game(options);
+
+export function fromSnapshot(mapNumber, state, options = {}) {
+  if (state?.v !== 2) throw new TypeError('Restoration requires snapshot({continuation:true}); v1 observations omit bot memory');
+  if (state.map_number !== mapNumber || state.rules_version !== RULES_VERSION) throw new Error('Snapshot map or rules version mismatch');
+  const saved = unpackGraph(state.continuation);
+  if (saved.options?.mapNumber !== mapNumber || !['begin','moves','afterParty'].includes(saved.phase)) throw new TypeError('Invalid continuation state');
+  const allowed = ['autoAdvanceBots','recordDecisions','events','onPartyTurn','onDecision'];
+  if (Object.keys(options).some(key=>!allowed.includes(key))) throw new TypeError('Restore options may change delivery, not rules or controllers');
+  const game = new Game({...saved.options,...options,deferStart:true});
+  for (const key of ['board','movesLeft','nextParty','completedRounds','phase','terminal','winner','endedBy','decisions']) game[key] = saved[key];
+  game.map.rnd_seed = saved.rng;
+  game.map.towns = saved.towns;
+  game.map.captureEvents = options.events ?? saved.captureEvents;
+  game.events = []; game.map.events = [];
+  if (JSON.stringify(game.snapshot()) !== JSON.stringify(state.observation)) throw new Error('Continuation does not match its observation');
+  game._advance();
+  return game;
+}
