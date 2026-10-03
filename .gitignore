@@ -1,0 +1,16 @@
+node_modules/
+data/
+runs/
+.venv/
+__pycache__/
+*.parquet
+*.pt
+.env
+.env.*
+*.pem
+*keyhere*
+New Text Document.txt
+test-results/
+playwright-report/
+kaggle/dataset/*
+!kaggle/dataset/dataset-metadata.json
