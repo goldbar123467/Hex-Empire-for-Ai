@@ -65,7 +65,7 @@ game and Node tools use it. Behavior is identical to upstream (golden test).
 - [x] **1.5 Browser uses engine.** `server.js` serves `engine/` at `/engine`. `public/game/*` imports
   rules from `/engine/index.js`; `MapRender`, `Replay`, `Statistics`, `UI` keep rendering only.
   Watching a 4-bot game in the browser looks and plays as before.
-- [ ] **1.6 Tools.** `tools/play.mjs` (run one game, print result and final hash) and `tools/bench.mjs`
+- [x] **1.6 Tools.** `tools/play.mjs` (run one game, print result and final hash) and `tools/bench.mjs`
   switched to the engine (keep the original-code mode behind `--legacy` for comparison).
 
 Acceptance
@@ -81,6 +81,11 @@ Acceptance
   test output and skipped.
 - `grep -rn "document\.\|window\.\|Math.random\|Date.now" engine/` returns nothing.
 - Engine bench within 10% of the Phase 0 baseline (or faster).
+
+Phase 1 completed on 2026-10-02. All parity/restore checks pass and Chromium matches the Node final
+hash. A contemporaneous 200-map alternating comparison measures engine/reference speed at 96.75%,
+inside the same 10% limit. Both are slower than the earlier standalone measurement; the absolute
+7.371 games/s result was not reproduced. See RESULTS for both measurements and the profiling limit.
 
 ---
 

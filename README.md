@@ -4,16 +4,16 @@ A deterministic Hex Empire research project based on Samuel Yuan's
 [HexEmpireAI](https://github.com/samuelyuan/HexEmpireAI), pinned to
 `8272cde7fce46520cffc3c845ed3f83ff95ead0a`.
 
-The current implementation runs the original four-bot browser game and a Node
+The current implementation runs one shared deterministic engine in the browser and Node, plus a
 reference harness. Human controls, decision recording, datasets, and training
 are planned but **not ready yet**. See [the phase checklist](docs/PLAN.md).
 
 ## Run locally
 
-Use Node 22 and npm 10. The implementation is currently on the Phase 0 branch:
+Use Node 22 and npm 10. The implementation is currently on the Phase 1 branch:
 
 ```sh
-git clone -b phase0/no-destination-guard https://github.com/goldbar123467/Hex-Empire-for-Ai.git
+git clone -b phase1/engine-tools https://github.com/goldbar123467/Hex-Empire-for-Ai.git
 cd Hex-Empire-for-Ai
 npm ci
 npm test
