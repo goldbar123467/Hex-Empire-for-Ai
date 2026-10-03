@@ -62,6 +62,7 @@ hexempire-rl/
   py/hexrl/          # Python package: worker client, env, features, dataset, models, bc, ppo, evaluate
   py/tests/          # pytest
   eval/              # committed evaluation map lists (small JSON)
+  scripts/           # machine setup (setup_vast.sh)
   kaggle/            # dataset card, dataset-metadata.json, starter notebook
   docs/              # PLAN, ENV_SPEC, DATASET_SPEC, TRAINING, DECISIONS, RESULTS
   data/   runs/      # gitignored: raw logs, built datasets, checkpoints, eval outputs

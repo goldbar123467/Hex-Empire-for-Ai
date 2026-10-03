@@ -13,23 +13,23 @@ Baseline facts were measured on upstream commit `8272cde` (see ENV_SPEC → Base
 Goal: a clean fork with tests, a throughput baseline, and golden fixtures recorded from the
 **unmodified** upstream code. Goldens must exist before any refactor.
 
-- [x] **0.1 Fork and tidy.** Import pinned `samuelyuan/HexEmpireAI` into the owner's existing `goldbar123467/Hex-Empire-for-Ai` repository (owner-selected destination, 2026-10-02).
-  Record the upstream commit hash in `docs/DECISIONS.md`. Keep `LICENSE` (add the owner's copyright
-  line *below* the upstream one). Set `package.json` `license` to `MIT` (upstream says `ISC`, which
-  contradicts `LICENSE`). Add `.gitignore` entries: `data/`, `runs/`, `.venv/`, `__pycache__/`,
+- [x] **0.1 Fork and tidy.** Import pinned `samuelyuan/HexEmpireAI` into the owner-selected `goldbar123467/Hex-Empire-for-Ai` repository (2026-10-02).
+  Confirm upstream HEAD matches the commit in `docs/DECISIONS.md`; if upstream has moved, stop and ask
+  the owner which commit to pin. Keep `LICENSE` (add the owner's copyright line *below* the upstream
+  one). Set `package.json` `license` to `MIT` (upstream says `ISC`, which contradicts `LICENSE`). Add `.gitignore` entries: `data/`, `runs/`, `.venv/`, `__pycache__/`,
   `*.parquet`, `*.pt`, `node_modules/`. Add `CLAUDE.md` containing the single line `@AGENTS.md`.
-  Copy `AGENTS.md` and these docs in. Create `docs/DECISIONS.md` and `docs/RESULTS.md` (empty templates).
+  Copy `AGENTS.md` and `docs/` (including the starter `DECISIONS.md` and `RESULTS.md`) in.
 - [x] **0.2 CI.** GitHub Actions workflow running `npm ci && npm test` on Node 22 for every PR.
 - [ ] **0.3 Reference harness.** `tools/bench.mjs` runs full 4-bot games headless against the
   *original* `public/game/Map.js` using `test/helpers/domStub.mjs`, mirroring `Game.runTurn` exactly
   (see ENV_SPEC → Reference turn loop). Silence `console.warn` inside the harness. Prints games/s,
   ms per game, mean rounds, bot moves per game. Record numbers in `docs/RESULTS.md` under "Engine throughput".
-- [x] **0.4 Canonical snapshot + hash (harness-side).** Implement `snapshot(board)` and
+- [x] **0.4 Canonical snapshot + hash (harness-side).** Implement `snapshot(board, movesLeft)` and
   `stateHash(snapshot)` exactly as specified in ENV_SPEC → Canonical snapshot, as standalone functions
   that read the upstream `board` object.
 - [x] **0.5 Golden fixtures.** `tools/make-golden.mjs` plays 100 bot games with the original code
-  (map numbers listed in `test/fixtures/golden/maps.json`: 0–49 and 50 numbers spread across
-  1–233279) and writes, per game: map number, the state hash after map setup, after every party turn,
+  (map numbers listed in `test/fixtures/golden/maps.json`: 0–49, plus 50 numbers spread evenly across
+  50–233279) and writes, per game: map number, the state hash after map setup, after every party turn,
   and the final summary (rounds, winner). Commit as `test/fixtures/golden/v1.json` (aim < 1 MB).
   Add `test/golden.test.mjs` that replays the same games and compares every hash.
 
@@ -68,9 +68,15 @@ game and Node tools use it. Behavior is identical to upstream (golden test).
 
 Acceptance
 - Golden test passes against `engine/` (all 100 games, every hash).
-- **External-path test:** for 20 golden maps, drive seat 0 as `external` but choose, at each decision,
-  the move the built-in bot would make (`game.botSuggest()`), with `human_seat = -1`. Hashes equal golden.
-  This proves `applyMove`/`endTurn` follow the same turn flow as bots.
+- **External turn-flow test:** for 20 golden maps, drive seat 0 as `external` and answer every decision
+  with `game.applyBotMove()`, with `humanSeat = -1` and `stopOnFocusElimination = false`. Every hash
+  equals golden. This proves external seats follow the same turn flow (move points, cleanup, spawn).
+- **External move test:** play the same 20 maps as 4-bot engine games and record seat 0's moves from
+  the events. Replay each map with seat 0 `external`, applying the recorded moves with `applyAction`
+  (PASS when the recorded turn has no more real moves). After every party turn the hash equals golden
+  when seat 0's `wfs_*` entries are ignored (external moves skip bot bookkeeping). A recorded move that is
+  not in `legalActions()` fails the test unless it is a stale bot move (Q5); those games are listed in the
+  test output and skipped.
 - `grep -rn "document\.\|window\.\|Math.random\|Date.now" engine/` returns nothing.
 - Engine bench within 10% of the Phase 0 baseline (or faster).
 
@@ -86,7 +92,8 @@ verified log.
   Starting a game sets controllers with the chosen seat `external` and `human_seat` = that seat.
 - [ ] **2.2 Click-to-move.** On the human's decision: highlight armies that can move; clicking one
   highlights its legal destinations (from `game.legalMoves()`); clicking a destination calls
-  `applyMove`. Show moves left. "End turn" button (also key `E`) calls `endTurn()`. Clicking anything
+  `applyAction(move.action)`. Show moves left. "End turn" button (also key `E`) calls
+  `applyAction(PASS)`. Clicking anything
   illegal does nothing. **No undo.** Bots then play with the chosen animation delay.
 - [ ] **2.3 Logger.** Write the raw JSONL format in DATASET_SPEC → Raw logs: header, one line per
   decision (human and bot), footer. Record `think_ms` for human decisions. On every completed round
@@ -106,7 +113,8 @@ verified log.
 Acceptance
 - Playwright test passes in CI.
 - The owner's 3 games verify `ok` with `tools/verify-log.mjs`.
-- A log's final hash equals `tools/play.mjs` replaying the same decisions.
+- For every verified log, the final hash computed in the browser (footer) equals the hash from the
+  Node replay — the browser and Node run identical rules.
 
 ---
 
@@ -117,7 +125,8 @@ Acceptance
   same raw format (`source: "bot"`). Map numbers are drawn from the **train** split only
   (DATASET_SPEC → Splits) unless `--split` says otherwise. `--human-seat rotate` marks seat
   `game_index % 4` as the human seat while bots still play it ("bot-in-human-seat" teacher data).
-- [ ] **3.2 Throughput.** Report games/s for K = 1 and K = number of cores in `docs/RESULTS.md`.
+- [ ] **3.2 Throughput.** Report games/s for K = 1 and K = default worker count (CPU quota − 4,
+  TRAINING.md §1) in `docs/RESULTS.md`.
 
 Acceptance
 - 10,000 games generated; 200 randomly chosen verify `ok`.
