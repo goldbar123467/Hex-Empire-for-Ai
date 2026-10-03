@@ -24,7 +24,7 @@ Goal: a clean fork with tests, a throughput baseline, and golden fixtures record
   *original* `public/game/Map.js` using `test/helpers/domStub.mjs`, mirroring `Game.runTurn` exactly
   (see ENV_SPEC → Reference turn loop). Silence `console.warn` inside the harness. Prints games/s,
   ms per game, mean rounds, bot moves per game. Record numbers in `docs/RESULTS.md` under "Engine throughput".
-- [ ] **0.4 Canonical snapshot + hash (harness-side).** Implement `snapshot(board)` and
+- [x] **0.4 Canonical snapshot + hash (harness-side).** Implement `snapshot(board)` and
   `stateHash(snapshot)` exactly as specified in ENV_SPEC → Canonical snapshot, as standalone functions
   that read the upstream `board` object.
 - [ ] **0.5 Golden fixtures.** `tools/make-golden.mjs` plays 100 bot games with the original code
