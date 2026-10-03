@@ -153,10 +153,11 @@ class Replay {
     const snapshot = this.snapshots[turnIndex];
     
     // Restore board state from snapshot
-    this.restoreBoardState(board, snapshot);
+    const viewBoard = structuredClone(board);
+    this.restoreBoardState(viewBoard, snapshot);
     
     // Render the map
-    this.mapRender.drawMap(board, this.images);
+    this.mapRender.drawMap(viewBoard, this.images);
     
     // Update controls
     this.updateControls();

@@ -62,7 +62,7 @@ game and Node tools use it. Behavior is identical to upstream (golden test).
   axial direction; every legal destination is within axial distance 2.
 - [x] **1.4 Snapshot restore.** `engine.fromSnapshot(mapNumber, snapshot)`. Test: for 50 golden games,
   snapshot at a random party turn, restore into a fresh game, play out with bots, final hash equals golden.
-- [ ] **1.5 Browser uses engine.** `server.js` serves `engine/` at `/engine`. `public/game/*` imports
+- [x] **1.5 Browser uses engine.** `server.js` serves `engine/` at `/engine`. `public/game/*` imports
   rules from `/engine/index.js`; `MapRender`, `Replay`, `Statistics`, `UI` keep rendering only.
   Watching a 4-bot game in the browser looks and plays as before.
 - [ ] **1.6 Tools.** `tools/play.mjs` (run one game, print result and final hash) and `tools/bench.mjs`
