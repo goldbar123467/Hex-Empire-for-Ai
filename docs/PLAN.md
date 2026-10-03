@@ -53,7 +53,7 @@ game and Node tools use it. Behavior is identical to upstream (golden test).
   in the same order** (map generation consumes rand values for cosmetic images; dropping one changes
   every map — see ENV_SPEC → Map generation). Replace `updateGameLog` DOM writes with an event list the
   caller can read (`game.drainEvents()`).
-- [ ] **1.2 Game API.** Implement `createGame()` and the methods in ENV_SPEC → Engine API, including
+- [x] **1.2 Game API.** Implement `createGame()` and the methods in ENV_SPEC → Engine API, including
   the turn flow, external controllers, `human_seat`, legal moves (de-duplicated, sorted), action ids,
   turn limit, and terminal logic.
 - [x] **1.3 Hex grid + action ids.** `engine/hexgrid.js` implements cell index, odd-q ↔ axial, the 18
