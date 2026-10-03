@@ -39,6 +39,7 @@ function update(){
   $('selectionTitle').textContent=human?'Choose an army':status.terminal?'Final battlefield':'Awaiting your turn';
   $('selectionDetail').textContent=human?'Bright rings mark armies that can move.':'Army labels show troops / morale.';
   if(status.terminal && active){
+    game.replay.setEnabled(true);
     $('resultPanel').hidden=false;
     const result=game.engine.result();
     $('resultHeading').textContent=result.ended_by==='eliminated'?'Your empire fell.':result.winner>=0?`${names[result.winner]} wins.`:'The campaign has ended.';

@@ -72,6 +72,7 @@ hexempire-rl/
 
 ```bash
 npm ci && npm test                               # Node tests, incl. golden parity
+npm run test:ui                                  # Chromium human-play and log verification
 node tools/bench.mjs --games 200                 # engine throughput
 node tools/play.mjs --map 1234 --controllers bot,bot,bot,bot
 node server.js                                   # browser game + human play at http://localhost:3000
