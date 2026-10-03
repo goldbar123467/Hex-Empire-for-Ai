@@ -1,16 +1,18 @@
 import { Game } from './Game.js';
 import { PASS } from '/engine/index.js';
+import { GameLogger } from './Logger.js';
 const $=id=>document.getElementById(id);
 const names=['Redosia','Violetnam','Bluegaria','Greenland'];
 const colors=['#e57268','#b299de','#78b4d8','#96b67b'];
 const game=new Game({onChange:update,onEvents:consumeEvents});
 window.game=game;
-let active=false,seat=0,dispatchCount=0;
+let active=false,seat=0,dispatchCount=0,logger=null;
 function showError(error){$('appError').textContent=error.message ?? String(error);$('appError').hidden=false;}
 game.onError=showError;
 try{$('playerId').value=localStorage.getItem('hex-player-id')||'p01';}catch{}
 function mapNumber(){const input=$('mapNumberInput');return input.value===''?Math.floor(Math.random()*233280):Number(input.value);}
-function consumeEvents(events){
+function consumeEvents(events,session){
+  if(!session.preview)logger?.consume(events,session);
   for(const event of events)if(event.message){const li=document.createElement('li');li.textContent=`Round ${event.round+1} · ${event.message}`;$('gamelog').prepend(li);dispatchCount++;}
   while($('gamelog').children.length>180)$('gamelog').lastChild.remove();
   $('logBadge').textContent=dispatchCount;
@@ -53,7 +55,22 @@ async function start(watch=false){
   $('gamelog').replaceChildren();dispatchCount=0;$('resultPanel').hidden=true;$('replayBar').hidden=true;
   active=true;
   try{
-    await game.start({mapNumber:mapNumber(),controllers,humanSeat:seat});
+    const chosenMap=mapNumber();$('mapNumberInput').value=chosenMap;
+    if(watch){logger=null;$('saveStatus').textContent='Spectator · not recorded';}
+    else{
+      const response=await fetch('/api/version');if(!response.ok)throw new Error('Unable to identify this engine build. Reload before starting.');
+      const version=await response.json();
+      const nextLogger=new GameLogger({mapNumber:chosenMap,humanSeat:seat,playerId:$('playerId').value,engineCommit:version.engine_commit,onStatus:(status,error)=>{
+        if(logger!==nextLogger)return;
+        $('saveStatus').classList.toggle('failed',status==='failed');
+        $('saveStatus').textContent=({saving:'Saving locally…',saved:'Saved locally',verified:'Saved & replay verified',failed:'Save failed · download your log'})[status];
+        if(error)showError(new Error(`Local save failed: ${error.message}. Use Download game log to keep a copy.`));
+      }});
+      logger=nextLogger;
+    }
+    game.logger=logger;$('downloadButton').hidden=!logger;
+    await game.start({mapNumber:chosenMap,controllers,humanSeat:seat});
+    logger?.save();
     $('setupPanel').hidden=true;$('activePanel').hidden=false;
     $('empireTitle').textContent=seat<0?'A battle of empires.':names[seat];$('campaignLabel').textContent=seat<0?'SPECTATOR MODE':'YOUR CAMPAIGN';
     if(seat>=0){const scroll=document.querySelector('.map-scroll');scroll.scrollLeft=seat>=2?scroll.scrollWidth:0;}
@@ -89,10 +106,14 @@ $('map').addEventListener('click',event=>{
 });
 $('newGameButton').addEventListener('click',async()=>{
   if(!game.engine.terminal && !confirm('Leave this campaign and set up a new one?'))return;
+  logger?.save();logger=null;game.logger=null;$('saveStatus').textContent='Local session';$('saveStatus').classList.remove('failed');
   game.stop();active=false;$('activePanel').hidden=true;$('setupPanel').hidden=false;$('replayBar').hidden=true;
   $('startBattleButton').disabled=false;$('watchButton').disabled=false;
   await game.start({mapNumber:game.mapNumber},{preview:true});
 });
+$('downloadButton').addEventListener('click',()=>logger?.download());
+document.addEventListener('visibilitychange',()=>{if(document.hidden)logger?.save();});
+window.addEventListener('beforeunload',event=>{if(active && !game.engine.terminal){event.preventDefault();event.returnValue='';}});
 $('replaySlider').addEventListener('input',()=>{const index=Number($('replaySlider').value);game.replay.goToTurn(index,game.board);$('replayLabel').textContent=`Round ${game.replay.snapshots[index].turn}`;});
 $('replayExit').addEventListener('click',()=>{game.render();$('replaySlider').value=game.replay.snapshots.length-1;$('replayLabel').textContent=`Round ${game.engine.result().rounds}`;});
 try{await game.start({mapNumber:1234},{preview:true});$('startBattleButton').disabled=false;$('watchButton').disabled=false;}catch(error){showError(error);}

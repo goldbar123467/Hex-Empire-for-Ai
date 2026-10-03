@@ -102,7 +102,7 @@ verified log.
   `applyAction(move.action)`. Show moves left. "End turn" button (also key `E`) calls
   `applyAction(PASS)`. Clicking anything
   illegal does nothing. **No undo.** Bots then play with the chosen animation delay.
-- [ ] **2.3 Logger.** Write the raw JSONL format in DATASET_SPEC → Raw logs: header, one line per
+- [x] **2.3 Logger.** Write the raw JSONL format in DATASET_SPEC → Raw logs: header, one line per
   decision (human and bot), footer. Record `think_ms` for human decisions. On every completed round
   and at game end, `POST /api/log` with the lines so far; `server.js` writes
   `data/raw/human/<YYYY-MM-DD>/<game_id>.jsonl` (atomic write: temp file + rename). Add a

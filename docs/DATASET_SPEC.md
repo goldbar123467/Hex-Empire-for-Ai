@@ -32,6 +32,10 @@ Paths: `data/raw/human/<YYYY-MM-DD>/<game_id>.jsonl`, `data/raw/bot/<run>/shard-
 
 `controllers` values: `"human"`, `"bot"`, `"agent:<policy_name>"`. `player_id` only for human games.
 `date` is the UTC date only (no time of day). `engine_commit`: the browser gets it from `GET /api/version`.
+Development builds append `-dirty` to the commit when the checkout has local changes; use a clean
+commit for owner data collection. Automated browser tests save under `test-results/`, never in the
+owner's `data/raw/human/` directory. The local server replay-verifies each saved prefix before an
+atomic write and rejects conflicting updates; an older request cannot truncate a newer log.
 
 **Decision** (one line per decision, by any controller, in play order)
 

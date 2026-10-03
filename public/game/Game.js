@@ -27,6 +27,7 @@ export class Game {
   }
   updated() {
     const events=this.engine.drainEvents();
+    if(events.some(e=>e.type==='terminal') && this.replay.snapshots.at(-1)?.turn!==this.engine.result().rounds)this.replay.captureSnapshot(this.board,this.engine.result().rounds);
     this.onEvents(events,this);
     this.selected=null;
     this.thinkStarted=this.engine.status().needsDecision?performance.now():null;
