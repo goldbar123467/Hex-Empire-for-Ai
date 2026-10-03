@@ -47,7 +47,7 @@ Phase 0 completed on 2026-10-02: original v1 fixtures remain unchanged; the owne
 Goal: `engine/` holds all game rules and the built-in bot with no DOM access, and both the browser
 game and Node tools use it. Behavior is identical to upstream (golden test).
 
-- [ ] **1.1 Extract modules.** Move rules out of `public/game/Map.js`, `Bot.js`, `Pathfinder.js` into
+- [x] **1.1 Extract modules.** Move rules out of `public/game/Map.js`, `Bot.js`, `Pathfinder.js` into
   `engine/`: `rng.js`, `hexgrid.js`, `mapgen.js`, `rules.js`, `bot.js`, `pathfinder.js`, `snapshot.js`,
   `game.js`, `version.js`, `index.js`. Remove all canvas/Image/DOM calls **but keep every `rand()` call
   in the same order** (map generation consumes rand values for cosmetic images; dropping one changes
